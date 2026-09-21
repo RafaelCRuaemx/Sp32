@@ -9,11 +9,17 @@ import { appConfig, getActiveTheme } from './config/appConfig';
 import './App.css';
 
 /**
- * App - Router de estado local (activeTab) en estilo Híbrido profesional
- * Con soporte para personalización multi-equipo mediante appConfig.js
+ * App - Shell dinámico de la aplicación
+ * Soporta alternar entre navegación Horizontal Superior (top) y Menú Lateral (sidebar)
+ * Inyecta variables CSS y controla la visibilidad modular
  */
 function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  // Obtener el primer módulo habilitado
+  const firstAvailableModule = Object.keys(appConfig.modules).find(
+    (key) => appConfig.modules[key]?.enabled !== false
+  ) || 'dashboard';
+
+  const [activeTab, setActiveTab] = useState(firstAvailableModule);
   const [toast, setToast] = useState({ show: false, title: '', message: '', type: 'success' });
 
   // Inyección de variables CSS según el tema configurado en appConfig.js
@@ -61,34 +67,44 @@ function App() {
     }
   };
 
+  const isSidebar = appConfig.layout.navigationStyle === 'sidebar';
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased selection:bg-indigo-600 selection:text-white">
-      {/* Barra de Navegación Superior Dinámica */}
+    <div className={`min-h-screen bg-slate-50 text-slate-900 font-sans antialiased selection:bg-indigo-600 selection:text-white ${isSidebar ? 'flex' : 'flex flex-col'}`}>
+      {/* Navegación Adaptable (Topbar o Sidebar) */}
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      {/* Contenedor Principal */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {renderCurrentView()}
-      </main>
+      {/* Contenedor Principal (Flexible en Sidebar, Centrado en Topbar) */}
+      <div className={`flex-1 flex flex-col min-h-screen ${isSidebar ? 'overflow-x-hidden' : ''}`}>
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {renderCurrentView()}
+        </main>
+
+        {/* Footer Institucional Configurable */}
+        <footer className="border-t border-slate-200 bg-white py-4 mt-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 font-mono">
+            <div className="flex items-center gap-2">
+              <span>{appConfig.institution.copyright}</span>
+              {appConfig.institution.cct && (
+                <>
+                  <span>•</span>
+                  <span>{appConfig.institution.cct}</span>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-slate-400">Punto de Control:</span>
+              <span>•</span>
+              <span className="text-emerald-600 font-semibold">
+                {appConfig.hardware.label} {appConfig.hardware.status} ({appConfig.hardware.ip})
+              </span>  
+            </div>
+          </div>
+        </footer>
+      </div>
 
       {/* Toast Flotante Global */}
       <Toast toast={toast} onClose={closeToast} />
-
-      {/* Footer Limpio Institucional Configurable */}
-      <footer className="border-t border-slate-200 bg-white py-4 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 font-mono">
-          <div className="flex items-center gap-2">
-            <span>{appConfig.institution.copyright}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-slate-400">Dispositivo:</span>
-            <span>•</span>
-            <span className="text-emerald-600 font-semibold">
-              {appConfig.hardware.label} {appConfig.hardware.status} ({appConfig.hardware.ip})
-            </span>  
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

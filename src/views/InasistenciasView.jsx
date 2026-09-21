@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import Pagination from '../components/Pagination';
 import { InasistenciasService } from '../services/api';
-import { appConfig } from '../config/appConfig';
+import { appConfig, getCardRadiusClass } from '../config/appConfig';
 
 /**
  * InasistenciasView - Pantalla 3: Control y justificación de ausencias
  * Con doble confirmación para asentar justificaciones oficiales.
  */
 export default function InasistenciasView({ showToast }) {
+  const cardRadius = getCardRadiusClass();
   const [inasistencias, setInasistencias] = useState([
     {
       id: 101,
@@ -68,7 +69,7 @@ export default function InasistenciasView({ showToast }) {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
-  const [motivo, setMotivo] = useState('Incapacidad Médica');
+  const [motivo, setMotivo] = useState(appConfig.justifications[0] || 'Incapacidad Médica');
   const [folio, setFolio] = useState('');
   const [observaciones, setObservaciones] = useState('');
 
@@ -92,7 +93,7 @@ export default function InasistenciasView({ showToast }) {
 
   const handleOpenJustificar = (item) => {
     setSelectedItem(item);
-    setMotivo('Incapacidad Médica');
+    setMotivo(appConfig.justifications[0] || 'Incapacidad Médica');
     setFolio('');
     setObservaciones('');
     setIsConfirmingJustification(false);
@@ -182,7 +183,7 @@ export default function InasistenciasView({ showToast }) {
       </div>
 
       {/* Tabla de Inasistencias */}
-      <div className="bg-white border border-slate-200/90 rounded-xl overflow-hidden shadow-xs">
+      <div className={`bg-white border border-slate-200/90 ${cardRadius} overflow-hidden shadow-xs`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-700">
             <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 font-mono">
@@ -266,7 +267,7 @@ export default function InasistenciasView({ showToast }) {
       {/* Modal de Justificación con Doble Confirmación */}
       {selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-xl space-y-4">
+          <div className={`bg-white border border-slate-200 ${cardRadius} w-full max-w-md p-6 shadow-xl space-y-4`}>
             
             {/* VISTA 1: FORMULARIO INICIAL */}
             {!isConfirmingJustification ? (
@@ -297,10 +298,9 @@ export default function InasistenciasView({ showToast }) {
                       onChange={(e) => setMotivo(e.target.value)}
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800"
                     >
-                      <option value="Incapacidad Médica">Incapacidad Médica / Consulta</option>
-                      <option value="Asunto Personal">Asunto Personal o Familiar</option>
-                      <option value="Comisión Académica">Comisión Académica / Evento</option>
-                      <option value="Trámite Administrativo">Trámite Administrativo</option>
+                      {appConfig.justifications.map((just) => (
+                        <option key={just} value={just}>{just}</option>
+                      ))}
                     </select>
                   </div>
 

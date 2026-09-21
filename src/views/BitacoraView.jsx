@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { BitacoraService } from '../services/api';
 import Pagination from '../components/Pagination';
-import { appConfig } from '../config/appConfig';
+import { appConfig, getCardRadiusClass } from '../config/appConfig';
 
 /**
  * BitacoraView - Pantalla 2: Historial en tiempo real de accesos RFID
  * Conexión lista con Django API (BitacoraService) y notificaciones Toast
  */
 export default function BitacoraView({ showToast }) {
+  const cardRadius = getCardRadiusClass();
   const [logs, setLogs] = useState([
     {
       id: 1,
@@ -104,13 +105,16 @@ export default function BitacoraView({ showToast }) {
       { nombre: 'UID Desconocido', matricula: 'N/A', uid: '00:A1:B2:C3', estado: 'denegado' },
     ];
     const randomItem = nombresDemo[Math.floor(Math.random() * nombresDemo.length)];
+    const puntos = appConfig.hardware.accessPoints || ['Torniquete 01'];
+    const randomPunto = puntos[Math.floor(Math.random() * puntos.length)];
+
     const nuevoLog = {
       id: Date.now(),
       nombre: randomItem.nombre,
       matricula: randomItem.matricula,
       uid: randomItem.uid,
       hora: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-      puerta: 'Torniquete 01',
+      puerta: randomPunto,
       estado: randomItem.estado,
     };
 
@@ -223,7 +227,7 @@ export default function BitacoraView({ showToast }) {
       </div>
 
       {/* Tabla limpia y nítida */}
-      <div className="bg-white border border-slate-200/90 rounded-xl overflow-hidden shadow-xs">
+      <div className={`bg-white border border-slate-200/90 ${cardRadius} overflow-hidden shadow-xs`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-700">
             <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 font-mono">
