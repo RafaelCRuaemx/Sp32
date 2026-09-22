@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
-import Pagination from '../components/Pagination';
+import DataTable from '../components/DataTables';
 import { InasistenciasService } from '../services/api';
-import { appConfig, getCardRadiusClass, getTableDensityClass, getCardShadowClass } from '../config/appConfig';
+import { appConfig, getCardRadiusClass } from '../config/appConfig';
 
 /**
  * InasistenciasView - Pantalla 3: Control y justificación de ausencias
- * Con doble confirmación para asentar justificaciones oficiales.
+ * Integrado con DataTable (TanStack Table) y doble confirmación para justificaciones.
  */
 export default function InasistenciasView({ showToast }) {
   const cardRadius = getCardRadiusClass();
-  const cardShadow = getCardShadowClass();
-  const tableDensity = getTableDensityClass();
   const [inasistencias, setInasistencias] = useState([
     {
       //mock de usuarios para realziar demo de como se veria el sistema
@@ -70,7 +68,7 @@ export default function InasistenciasView({ showToast }) {
     },
   ]);
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filterEstado, setFilterEstado] = useState('todos');
   const [selectedItem, setSelectedItem] = useState(null);
   const [motivo, setMotivo] = useState(appConfig.justifications[0] || 'Incapacidad Médica');
   const [folio, setFolio] = useState('');
@@ -79,20 +77,11 @@ export default function InasistenciasView({ showToast }) {
   // Estado para la DOBLE VERIFICACIÓN
   const [isConfirmingJustification, setIsConfirmingJustification] = useState(false);
 
-  const filteredList = inasistencias.filter((item) =>
-    item.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.matricula.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.grupo.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(appConfig.pagination?.itemsPerPage || 5);
-  const totalPages = Math.ceil(filteredList.length / itemsPerPage) || 1;
-  const paginatedInasistencias = filteredList.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Filtrado por botón de estado (Todas, Injustificadas, Justificadas)
+  const displayInasistencias =
+    filterEstado === 'todos'
+      ? inasistencias
+      : inasistencias.filter((item) => item.estado === filterEstado);
 
   const handleOpenJustificar = (item) => {
     setSelectedItem(item);
@@ -149,6 +138,84 @@ export default function InasistenciasView({ showToast }) {
     handleCloseModal();
   };
 
+  // ==============================================================================
+  // DEFINICIÓN DE COLUMNAS PARA TANSTACK TABLE (DATATABLES)
+  // ==============================================================================
+  const columns = [
+    {
+      accessorKey: 'nombre',
+      header: 'Alumno / Matrícula',
+      cell: (info) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-700 font-mono shrink-0">
+            {info.getValue().substring(0, 2).toUpperCase()}
+          </div>
+          <div>
+            <div className="font-semibold text-slate-900">{info.getValue()}</div>
+            <div className="text-[11px] font-mono text-slate-500">{info.row.original.matricula}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'grupo',
+      header: 'Grupo',
+      cell: (info) => <span className="text-slate-600 font-medium">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: 'fecha',
+      header: 'Fecha',
+      cell: (info) => <span className="font-mono text-slate-500">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: 'tutorTelefono',
+      header: 'Contacto Tutor',
+      cell: (info) => <span className="font-mono text-slate-600">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: 'estado',
+      header: 'Estado',
+      cell: (info) => {
+        const item = info.row.original;
+        return item.estado === 'justificada' ? (
+          <div>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Justificada
+            </span>
+            {item.motivoJustificacion && (
+              <p className="text-[11px] text-slate-500 mt-0.5 max-w-[200px] truncate">
+                {item.motivoJustificacion}
+              </p>
+            )}
+          </div>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-rose-50 text-rose-700 border border-rose-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+            Injustificada
+          </span>
+        );
+      },
+    },
+    {
+      id: 'acciones',
+      header: 'Acción',
+      cell: (info) => {
+        const item = info.row.original;
+        return item.estado === 'injustificada' ? (
+          <button
+            onClick={() => handleOpenJustificar(item)}
+            className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium shadow-xs transition-colors cursor-pointer"
+          >
+            Justificar
+          </button>
+        ) : (
+          <span className="text-xs font-medium text-emerald-600 font-mono">✓ Validado</span>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -166,107 +233,35 @@ export default function InasistenciasView({ showToast }) {
         </div>
       </div>
 
-      {/* Barra de búsqueda */}
-      <div className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-xs flex flex-col sm:flex-row gap-4 justify-between items-center">
-        <div className="relative w-full sm:w-80">
-          <input
-            type="text"
-            placeholder="Buscar por nombre, matrícula o grupo..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
-          />
-        </div>
-        <span className="text-xs text-slate-500 font-mono">
-          TOTAL: {inasistencias.length} REGISTROS
-        </span>
-      </div>
-
-      {/* Tabla de Inasistencias */}
-      <div className={`bg-white border border-slate-200/90 ${cardRadius} overflow-hidden ${cardShadow}`}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 font-mono">
-              <tr>
-                <th scope="col" className={tableDensity}>Alumno / Matrícula</th>
-                <th scope="col" className={tableDensity}>Grupo</th>
-                <th scope="col" className={tableDensity}>Fecha</th>
-                <th scope="col" className={tableDensity}>Contacto Tutor</th>
-                <th scope="col" className={tableDensity}>Estado</th>
-                <th scope="col" className={`${tableDensity} text-right`}>Acción</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredList.length > 0 ? (
-                paginatedInasistencias.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className={`${tableDensity} whitespace-nowrap`}>
-                      <div className="font-semibold text-slate-900">{item.nombre}</div>
-                      <div className="text-[11px] font-mono text-slate-500">{item.matricula}</div>
-                    </td>
-                    <td className={`${tableDensity} whitespace-nowrap text-slate-600`}>
-                      {item.grupo}
-                    </td>
-                    <td className={`${tableDensity} whitespace-nowrap text-slate-500 font-mono`}>
-                      {item.fecha}
-                    </td>
-                    <td className={`${tableDensity} whitespace-nowrap text-slate-600 font-mono`}>
-                      {item.tutorTelefono}
-                    </td>
-                    <td className={`${tableDensity} whitespace-nowrap`}>
-                      {item.estado === 'justificada' ? (
-                        <div>
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Justificada
-                          </span>
-                          <p className="text-[11px] text-slate-500 mt-0.5 max-w-[200px] truncate">
-                            {item.motivoJustificacion}
-                          </p>
-                        </div>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                            Injustificada
-                        </span>
-                      )}
-                    </td>
-                    <td className={`${tableDensity} whitespace-nowrap text-right`}>
-                      {item.estado === 'injustificada' ? (
-                        <button
-                          onClick={() => handleOpenJustificar(item)}
-                          className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium shadow-xs transition-colors cursor-pointer"
-                        >
-                          Justificar
-                        </button>
-                      ) : (
-                        <span className="text-xs font-medium text-emerald-600">✓ Validado</span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="px-5 py-10 text-center text-slate-500 text-xs">
-                    No se encontraron registros de inasistencias.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Paginación */}
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          totalItems={filteredList.length}
-          itemsPerPage={itemsPerPage}
-          onPageSizeChange={setItemsPerPage}
-        />
-      </div>
+      {/* Componente DataTable con TanStack Table */}
+      <DataTable
+        data={displayInasistencias}
+        columns={columns}
+        searchPlaceholder="Buscar por alumno, matrícula o grupo..."
+        exportFileName="reporte_inasistencias_rfid"
+        extraToolbar={
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            <span className="text-xs font-medium text-slate-500 mr-1">Filtrar:</span>
+            {[
+              { id: 'todos', label: 'Todas' },
+              { id: 'injustificada', label: 'Injustificadas' },
+              { id: 'justificada', label: 'Justificadas' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setFilterEstado(tab.id)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+                  filterEstado === tab.id
+                    ? 'theme-btn-primary shadow-xs font-semibold'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        }
+      />
 
       {/* Modal de Justificación con Doble Confirmación */}
       {selectedItem && (
