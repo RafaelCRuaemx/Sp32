@@ -5,7 +5,7 @@ import DashboardView from './views/DashboardView';
 import BitacoraView from './views/BitacoraView';
 import InasistenciasView from './views/InasistenciasView';
 import AltasRfidView from './views/AltasRfidView';
-import { appConfig, getActiveTheme } from './config/appConfig';
+import { appConfig, getActiveTheme, isSidebarLayout } from './config/appConfig';
 import './App.css';
 
 /**
@@ -14,12 +14,15 @@ import './App.css';
  * Inyecta variables CSS y controla la visibilidad modular
  */
 function App() {
-  // Obtener el primer módulo habilitado
-  const firstAvailableModule = Object.keys(appConfig.modules).find(
-    (key) => appConfig.modules[key]?.enabled !== false
-  ) || 'dashboard';
+  const preferredDefault = appConfig.layout?.defaultView;
+  const initialTab =
+    preferredDefault && appConfig.modules[preferredDefault]?.enabled !== false
+      ? preferredDefault
+      : Object.keys(appConfig.modules).find(
+          (key) => appConfig.modules[key]?.enabled !== false
+        ) || 'dashboard';
 
-  const [activeTab, setActiveTab] = useState(firstAvailableModule);
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [toast, setToast] = useState({ show: false, title: '', message: '', type: 'success' });
 
   // Inyección de variables CSS según el tema configurado en appConfig.js
@@ -67,7 +70,7 @@ function App() {
     }
   };
 
-  const isSidebar = appConfig.layout.navigationStyle === 'sidebar';
+  const isSidebar = isSidebarLayout();
 
   return (
     <div className={`min-h-screen bg-slate-50 text-slate-900 font-sans antialiased selection:bg-indigo-600 selection:text-white ${isSidebar ? 'flex' : 'flex flex-col'}`}>

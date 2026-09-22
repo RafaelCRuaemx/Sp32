@@ -57,6 +57,19 @@ La aplicación web abrirá en: `http://localhost:5173`.
 
 ---
 
+## 🎨 Personalización Visual y Layout Multi-Equipo (`appConfig.js`)
+
+El proyecto cuenta con un sistema centralizado para que **cualquiera de los 5 equipos** pueda personalizar los colores, tipografía, maquetación (menú horizontal superior vs menú lateral izquierdo), orden de pestañas y reglas escolares editando únicamente [`src/config/appConfig.js`](src/config/appConfig.js).
+
+📖 **Consulta la [Guía Completa de Personalización](src/config/README.md)** para ver:
+- Cómo alternar entre **Menú Lateral (`'sidebar'`)** y **Barra Superior (`'top'`)**.
+- Cómo cambiar el orden de las pestañas (`menuOrder`) o la pantalla de inicio (`defaultView`).
+- Cómo mover o reorganizar las tarjetas y gráficas del Dashboard (`widgetsOrder`).
+- Paletas de colores listas: Azul Tecnológico, Guinda Institucional, Verde Esmeralda, Púrpura Innovación y Slate Neutro.
+- Configuración de carreras, roles, horarios y justificaciones.
+
+---
+
 ## 🔗 Conexión Frontend con Backend Django (Misma Máquina)
 
 Cuando desarrollas en tu computadora, el frontend corre en el puerto `5173` y Django en el puerto `8000`.

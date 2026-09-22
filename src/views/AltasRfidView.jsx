@@ -306,15 +306,17 @@ export default function AltasRfidView({ showToast }) {
           </p>
         </div>
 
-        <button
-          onClick={handleOpenCreateModal}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Crear Usuario
-        </button>
+        {appConfig.layout?.tables?.actionButtonPosition !== 'toolbar' && (
+          <button
+            onClick={handleOpenCreateModal}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Crear Usuario
+          </button>
+        )}
       </div>
 
       {/* Métricas Rápidas */}
@@ -356,24 +358,38 @@ export default function AltasRfidView({ showToast }) {
           />
         </div>
 
-        <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto">
-          <span className="text-xs font-medium text-slate-500 mr-1">Filtrar:</span>
-          {['todos', ...appConfig.academic.roles].map((rol) => (
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            <span className="text-xs font-medium text-slate-500 mr-1">Filtrar:</span>
+            {['todos', ...appConfig.academic.roles].map((rol) => (
+              <button
+                key={rol}
+                onClick={() => {
+                  setRolFilter(rol);
+                  setCurrentPage(1);
+                }}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer capitalize whitespace-nowrap ${
+                  rolFilter === rol
+                    ? 'theme-btn-primary shadow-xs font-semibold'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {rol === 'todos' ? 'Todos los roles' : rol}
+              </button>
+            ))}
+          </div>
+
+          {appConfig.layout?.tables?.actionButtonPosition === 'toolbar' && (
             <button
-              key={rol}
-              onClick={() => {
-                setRolFilter(rol);
-                setCurrentPage(1);
-              }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer capitalize whitespace-nowrap ${
-                rolFilter === rol
-                  ? 'theme-btn-primary shadow-xs font-semibold'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
+              onClick={handleOpenCreateModal}
+              className="inline-flex items-center justify-center gap-2 px-3.5 py-1.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer"
             >
-              {rol === 'todos' ? 'Todos los roles' : rol}
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Crear Usuario
             </button>
-          ))}
+          )}
         </div>
       </div>
 

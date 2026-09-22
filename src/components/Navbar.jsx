@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { appConfig } from '../config/appConfig';
+import { appConfig, isSidebarLayout } from '../config/appConfig';
 
 /**
  * Navbar - Sistema de navegación adaptable (Top Header o Sidebar Lateral)
- * Soporta alineación de tabs, reloj dinámico, hardware badge y filtrado de módulos.
+ * Soporta alineación de tabs, reloj dinámico, hardware badge y reordenamiento de menú.
  * @param {string} activeTab - Tab activo ('dashboard' | 'bitacora' | 'inasistencias' | 'altas')
  * @param {function} setActiveTab - Función selectora de tab
  */
@@ -70,20 +70,29 @@ export default function Navbar({ activeTab, setActiveTab }) {
     },
   ];
 
-  // Filtrar solo los módulos que estén habilitados en appConfig.modules
-  const navItems = allNavItems.filter((item) => appConfig.modules[item.id]?.enabled !== false);
+  // Reordenar las pestañas según appConfig.layout.menuOrder
+  const customOrder = appConfig.layout?.menuOrder || ['dashboard', 'bitacora', 'inasistencias', 'altas'];
+  const orderedItems = [
+    ...customOrder
+      .map((id) => allNavItems.find((item) => item.id === id))
+      .filter(Boolean),
+    ...allNavItems.filter((item) => !customOrder.includes(item.id)),
+  ];
 
-  const isSidebar = appConfig.layout.navigationStyle === 'sidebar';
-  const showClock = appConfig.layout.navbar.showLiveClock !== false;
-  const showHardware = appConfig.layout.navbar.showHardwareBadge !== false;
-  const alignment = appConfig.layout.navbar.tabsAlignment || 'center';
+  // Filtrar solo los módulos que estén habilitados en appConfig.modules
+  const navItems = orderedItems.filter((item) => appConfig.modules[item.id]?.enabled !== false);
+
+  const isSidebar = isSidebarLayout();
+  const showClock = appConfig.layout?.navbar?.showLiveClock !== false;
+  const showHardware = appConfig.layout?.navbar?.showHardwareBadge !== false;
+  const alignment = appConfig.layout?.navbar?.tabsAlignment || 'center';
 
   // ============================================================================
-  // MODO 1: SIDEBAR LATERAL IZQUIERDO (navigationStyle === 'sidebar')
+  // MODO 1: SIDEBAR LATERAL IZQUIERDO (navigationStyle === 'sidebar' o 'slidebar')
   // ============================================================================
   if (isSidebar) {
     return (
-      <aside className="w-64 bg-white border-r border-slate-200/90 h-screen sticky top-0 flex flex-col justify-between p-5 z-40 shadow-xs">
+      <aside className="w-64 bg-white border-r border-slate-200/90 h-screen sticky top-0 flex flex-col justify-between p-5 z-40 shadow-xs shrink-0">
         {/* Encabezado e Identidad */}
         <div className="space-y-6">
           <div className="border-b border-slate-100 pb-4">

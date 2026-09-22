@@ -2,10 +2,9 @@
  * ==================================================================================
  * ARCHIVO DE CONFIGURACIÓN Y PERSONALIZACIÓN DEL SISTEMA (appConfig.js)
  * ==================================================================================
- * Este archivo central permite a cualquier equipo adaptar el sistema completo a su
- * gusto, colores, fuentes, maquetación (Layout) y datos escolares.
- *
- * Solo modifica los valores que necesites y guarda este archivo.
+ * Este archivo central es el "Centro de Mando" para cualquiera de los 5 equipos.
+ * Desde aquí puedes MOVER, OCULTAR, REORDENAR Y CAMBIAR todo lo que se muestra
+ * en pantalla sin tener que tocar ningún otro archivo de código.
  */
 
 export const appConfig = {
@@ -23,26 +22,47 @@ export const appConfig = {
 
   // ================================================================================
   // 2. DISPOSICIÓN Y MAQUETACIÓN VISUAL (LAYOUT)
+  // ¡Aquí puedes mover y reordenar los objetos en pantalla!
   // ================================================================================
   layout: {
-    // Estilo de la navegación principal:
-    // 'top'     -> Barra horizontal superior clásica
-    // 'sidebar' -> Menú vertical a la izquierda estilo Dashboard Ejecutivo
-    navigationStyle: 'top',
+    // ------------------------------------------------------------------------------
+    // ¿DÓNDE QUIERES EL MENÚ DE NAVEGACIÓN?
+    // 'sidebar' o 'slidebar' -> Menú vertical a la izquierda estilo Dashboard Ejecutivo
+    // 'top'                  -> Barra horizontal superior clásica
+    // ------------------------------------------------------------------------------
+    navigationStyle: 'slidebar',
 
-    // Configuración de la barra de navegación:
+    // ¿Qué pantalla quieres que se abra por defecto al entrar al sistema?
+    // Opciones: 'dashboard' | 'bitacora' | 'inasistencias' | 'altas'
+    defaultView: 'dashboard',
+
+    // ------------------------------------------------------------------------------
+    // ORDEN DE LAS PESTAÑAS DEL MENÚ:
+    // Puedes cambiar el orden en la lista para mover las pestañas de lugar
+    // ------------------------------------------------------------------------------
+    menuOrder: ['dashboard', 'bitacora', 'inasistencias', 'altas'],
+
+    // Configuración de la barra o menú de navegación:
     navbar: {
       showLiveClock: true,      // ¿Mostrar u ocultar el reloj digital en vivo? (true / false)
       showHardwareBadge: true,  // ¿Mostrar u ocultar la IP del ESP32 en el Navbar? (true / false)
-      tabsAlignment: 'center',  // Alineación de las pestañas: 'left' | 'center' | 'right'
+      tabsAlignment: 'center',  // Alineación de las pestañas en modo 'top': 'left' | 'center' | 'right'
     },
 
-    // Configuración de la pantalla de Dashboard (Panel de Control):
+    // ------------------------------------------------------------------------------
+    // CONFIGURACIÓN Y ORDEN DE ELEMENTOS EN EL DASHBOARD (PANEL DE CONTROL):
+    // ------------------------------------------------------------------------------
     dashboard: {
-      // Columnas para las tarjetas de métricas (KPIs): 2, 3 o 4
+      // ORDEN DE LAS SECCIONES DEL DASHBOARD:
+      // Puedes moverlas de lugar cambiando el orden en este arreglo.
+      // Opciones: 'kpis' (tarjetas de resumen), 'charts' (gráfica y hardware), 'recentScans' (tabla)
+      // Ejemplo: si quieres ver primero la gráfica pon: ['charts', 'kpis', 'recentScans']
+      widgetsOrder: ['kpis', 'charts', 'recentScans'],
+
+      // Columnas para las tarjetas de métricas (KPIs): 2, 3 o 4 columnas por fila
       kpiColumns: 4,
 
-      // Visibilidad de widgets en el Dashboard:
+      // Visibilidad de widgets individuales:
       showHourlyChart: true,       // ¿Mostrar la gráfica de barras de flujo de alumnos? (true / false)
       showHardwareCard: true,      // ¿Mostrar la tarjeta de telemetría del ESP32? (true / false)
       showRecentScans: true,       // ¿Mostrar la mini-tabla de últimos accesos? (true / false)
@@ -51,6 +71,16 @@ export const appConfig = {
       // 'side-by-side' -> Lado a lado en columnas
       // 'stacked'      -> Uno debajo del otro a ancho completo
       chartLayout: 'side-by-side',
+    },
+
+    // ------------------------------------------------------------------------------
+    // POSICIÓN DE BOTONES EN LAS TABLAS:
+    // ------------------------------------------------------------------------------
+    tables: {
+      // ¿Dónde colocar el botón de acción principal ("Simular Lectura" / "Crear Usuario")?
+      // 'header'  -> Arriba a la derecha junto al título de la pantalla
+      // 'toolbar' -> Abajo integrado junto a la barra de búsqueda y filtros
+      actionButtonPosition: 'header',
     },
 
     // Estilo de bordes de las tarjetas, modales y tablas:
@@ -222,10 +252,27 @@ export function getActiveTheme() {
 }
 
 /**
+ * Función auxiliar para detectar si la navegación está en modo barra lateral (Sidebar)
+ * Admite de forma tolerante: 'sidebar', 'slidebar', 'lateral', 'vertical', 'left', 'izq'
+ */
+export function isSidebarLayout() {
+  const style = String(appConfig.layout?.navigationStyle || '').toLowerCase().trim();
+  return (
+    style === 'sidebar' ||
+    style === 'slidebar' ||
+    style === 'lateral' ||
+    style === 'vertical' ||
+    style === 'left' ||
+    style === 'izq' ||
+    style === 'izquierda'
+  );
+}
+
+/**
  * Función auxiliar para obtener la clase de redondeo de tarjetas
  */
 export function getCardRadiusClass() {
-  switch (appConfig.layout.cards.borderRadius) {
+  switch (appConfig.layout?.cards?.borderRadius) {
     case 'none':
       return 'rounded-none';
     case 'rounded':

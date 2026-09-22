@@ -172,15 +172,17 @@ export default function BitacoraView({ showToast }) {
           </p>
         </div>
 
-        <button
-          onClick={simularEscaneo}
-          className="flex items-center justify-center gap-2 px-4 py-2 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Simular Lectura RFID
-        </button>
+        {appConfig.layout?.tables?.actionButtonPosition !== 'toolbar' && (
+          <button
+            onClick={simularEscaneo}
+            className="flex items-center justify-center gap-2 px-4 py-2 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Simular Lectura RFID
+          </button>
+        )}
       </div>
 
       {/* Controles de búsqueda y filtros */}
@@ -199,30 +201,44 @@ export default function BitacoraView({ showToast }) {
           />
         </div>
 
-        {/* Filtros de estado */}
-        <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto">
-          <span className="text-xs font-medium text-slate-500 mr-1">Estado:</span>
-          {[
-            { id: 'todos', label: 'Todos' },
-            { id: 'a_tiempo', label: 'A Tiempo' },
-            { id: 'retardo', label: 'Retardo' },
-            { id: 'denegado', label: 'Denegado' },
-          ].map((tab) => (
+        {/* Filtros de estado y Botón en Toolbar si está configurado */}
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            <span className="text-xs font-medium text-slate-500 mr-1">Estado:</span>
+            {[
+              { id: 'todos', label: 'Todos' },
+              { id: 'a_tiempo', label: 'A Tiempo' },
+              { id: 'retardo', label: 'Retardo' },
+              { id: 'denegado', label: 'Denegado' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setStatusFilter(tab.id);
+                  setCurrentPage(1);
+                }}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+                  statusFilter === tab.id
+                    ? 'theme-btn-primary shadow-xs'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {appConfig.layout?.tables?.actionButtonPosition === 'toolbar' && (
             <button
-              key={tab.id}
-              onClick={() => {
-                setStatusFilter(tab.id);
-                setCurrentPage(1);
-              }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
-                statusFilter === tab.id
-                  ? 'theme-btn-primary shadow-xs'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
+              onClick={simularEscaneo}
+              className="flex items-center justify-center gap-2 px-3 py-1.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
             >
-              {tab.label}
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Simular Lectura
             </button>
-          ))}
+          )}
         </div>
       </div>
 
