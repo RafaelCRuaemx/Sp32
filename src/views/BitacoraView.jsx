@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { BitacoraService } from '../services/api';
 import Pagination from '../components/Pagination';
-import { appConfig } from '../config/appConfig';
+import { appConfig, getCardRadiusClass } from '../config/appConfig';
 
 /**
  * BitacoraView - Pantalla 2: Historial en tiempo real de accesos RFID
  * Conexión lista con Django API (BitacoraService) y notificaciones Toast
  */
 export default function BitacoraView({ showToast }) {
+  const cardRadius = getCardRadiusClass();
   const [logs, setLogs] = useState([
     {
       id: 1,
@@ -104,13 +105,16 @@ export default function BitacoraView({ showToast }) {
       { nombre: 'UID Desconocido', matricula: 'N/A', uid: '00:A1:B2:C3', estado: 'denegado' },
     ];
     const randomItem = nombresDemo[Math.floor(Math.random() * nombresDemo.length)];
+    const puntos = appConfig.hardware.accessPoints || ['Torniquete 01'];
+    const randomPunto = puntos[Math.floor(Math.random() * puntos.length)];
+
     const nuevoLog = {
       id: Date.now(),
       nombre: randomItem.nombre,
       matricula: randomItem.matricula,
       uid: randomItem.uid,
       hora: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-      puerta: 'Torniquete 01',
+      puerta: randomPunto,
       estado: randomItem.estado,
     };
 
@@ -168,15 +172,17 @@ export default function BitacoraView({ showToast }) {
           </p>
         </div>
 
-        <button
-          onClick={simularEscaneo}
-          className="flex items-center justify-center gap-2 px-4 py-2 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Simular Lectura RFID
-        </button>
+        {appConfig.layout?.tables?.actionButtonPosition !== 'toolbar' && (
+          <button
+            onClick={simularEscaneo}
+            className="flex items-center justify-center gap-2 px-4 py-2 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Simular Lectura RFID
+          </button>
+        )}
       </div>
 
       {/* Controles de búsqueda y filtros */}
@@ -195,35 +201,49 @@ export default function BitacoraView({ showToast }) {
           />
         </div>
 
-        {/* Filtros de estado */}
-        <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto">
-          <span className="text-xs font-medium text-slate-500 mr-1">Estado:</span>
-          {[
-            { id: 'todos', label: 'Todos' },
-            { id: 'a_tiempo', label: 'A Tiempo' },
-            { id: 'retardo', label: 'Retardo' },
-            { id: 'denegado', label: 'Denegado' },
-          ].map((tab) => (
+        {/* Filtros de estado y Botón en Toolbar si está configurado */}
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            <span className="text-xs font-medium text-slate-500 mr-1">Estado:</span>
+            {[
+              { id: 'todos', label: 'Todos' },
+              { id: 'a_tiempo', label: 'A Tiempo' },
+              { id: 'retardo', label: 'Retardo' },
+              { id: 'denegado', label: 'Denegado' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setStatusFilter(tab.id);
+                  setCurrentPage(1);
+                }}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+                  statusFilter === tab.id
+                    ? 'theme-btn-primary shadow-xs'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {appConfig.layout?.tables?.actionButtonPosition === 'toolbar' && (
             <button
-              key={tab.id}
-              onClick={() => {
-                setStatusFilter(tab.id);
-                setCurrentPage(1);
-              }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
-                statusFilter === tab.id
-                  ? 'theme-btn-primary shadow-xs'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
+              onClick={simularEscaneo}
+              className="flex items-center justify-center gap-2 px-3 py-1.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
             >
-              {tab.label}
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Simular Lectura
             </button>
-          ))}
+          )}
         </div>
       </div>
 
       {/* Tabla limpia y nítida */}
-      <div className="bg-white border border-slate-200/90 rounded-xl overflow-hidden shadow-xs">
+      <div className={`bg-white border border-slate-200/90 ${cardRadius} overflow-hidden shadow-xs`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-700">
             <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 font-mono">

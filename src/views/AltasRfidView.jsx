@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { UsuariosRfidService } from '../services/api';
 import Pagination from '../components/Pagination';
-import { appConfig } from '../config/appConfig';
+import { appConfig, getCardRadiusClass } from '../config/appConfig';
 
 /**
  * AltasRfidView - Pantalla 4: Gestión Integral de Usuarios y Padrón Escolar
@@ -11,17 +11,18 @@ import { appConfig } from '../config/appConfig';
  * 3. Reemplazo de tarjeta en "Leer ESP32" (si ya existía un UID previo)
  */
 export default function AltasRfidView({ showToast }) {
+  const cardRadius = getCardRadiusClass();
   const [usuarios, setUsuarios] = useState([
     {
       id: 1,
       nombre: 'Valeria Morales Cruz',
       matricula: '202303001',
       correo: 'valeria.morales@benitto.edu.mx',
-      telefono: '55-1234-8899',
+      telefono: '55-1234-5678',
       rol: 'Estudiante',
-      area: 'Ingeniería en Sistemas',
+      area: 'Ing. en Sistemas Computacionales',
       uidRfid: '9A:4B:C1:20',
-      fechaAlta: '2026-01-15',
+      fechaAlta: '2026-09-01',
       activo: true,
     },
     {
@@ -29,23 +30,23 @@ export default function AltasRfidView({ showToast }) {
       nombre: 'Diego Fernando Ruiz',
       matricula: '202303014',
       correo: 'diego.ruiz@benitto.edu.mx',
-      telefono: '55-3344-9900',
+      telefono: '55-2345-6789',
       rol: 'Estudiante',
-      area: 'Ingeniería Mecatrónica',
+      area: 'Ing. Mecatrónica',
       uidRfid: '3D:88:5A:F2',
-      fechaAlta: '2026-01-18',
+      fechaAlta: '2026-09-01',
       activo: true,
     },
     {
       id: 3,
-      nombre: 'Ing. Roberto Fuentes Méndez',
-      matricula: 'DOC-1092',
-      correo: 'roberto.fuentes@benitto.edu.mx',
-      telefono: '55-5566-7788',
+      nombre: 'Ing. Roberto Mendoza Peña',
+      matricula: 'DOC-8820',
+      correo: 'roberto.mendoza@benitto.edu.mx',
+      telefono: '55-8899-0011',
       rol: 'Docente',
-      area: 'Departamento de Electrónica',
-      uidRfid: '77:BC:31:05',
-      fechaAlta: '2026-01-10',
+      area: 'Docencia y Laboratorios',
+      uidRfid: 'FF:20:11:09',
+      fechaAlta: '2026-08-15',
       activo: true,
     },
     {
@@ -53,11 +54,35 @@ export default function AltasRfidView({ showToast }) {
       nombre: 'Sofia Elizabeth Lara',
       matricula: '202303088',
       correo: 'sofia.lara@benitto.edu.mx',
-      telefono: '55-7788-9911',
+      telefono: '55-3456-7890',
       rol: 'Estudiante',
-      area: 'Ingeniería en Computación',
+      area: 'Ing. Electrónica',
       uidRfid: 'B1:05:44:E9',
-      fechaAlta: '2026-01-20',
+      fechaAlta: '2026-09-02',
+      activo: true,
+    },
+    {
+      id: 5,
+      nombre: 'Lic. Claudia Nava Sánchez',
+      matricula: 'ADM-4012',
+      correo: 'claudia.nava@benitto.edu.mx',
+      telefono: '55-7766-5544',
+      rol: 'Administrativo',
+      area: 'Administración Escolar',
+      uidRfid: '7C:12:F3:A8',
+      fechaAlta: '2026-08-10',
+      activo: true,
+    },
+    {
+      id: 6,
+      nombre: 'Mariana Gutierrez Vega',
+      matricula: '202303032',
+      correo: 'mariana.gutierrez@benitto.edu.mx',
+      telefono: '55-4567-8901',
+      rol: 'Estudiante',
+      area: 'Ing. en Sistemas Computacionales',
+      uidRfid: '5B:33:CD:19',
+      fechaAlta: '2026-09-03',
       activo: true,
     },
   ]);
@@ -76,8 +101,8 @@ export default function AltasRfidView({ showToast }) {
     matricula: '',
     correo: '',
     telefono: '',
-    rol: 'Estudiante',
-    area: '',
+    rol: appConfig.academic.roles[0] || 'Estudiante',
+    area: appConfig.academic.areas[0] || '',
     uidRfid: '',
   };
 
@@ -281,15 +306,17 @@ export default function AltasRfidView({ showToast }) {
           </p>
         </div>
 
-        <button
-          onClick={handleOpenCreateModal}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Crear Usuario
-        </button>
+        {appConfig.layout?.tables?.actionButtonPosition !== 'toolbar' && (
+          <button
+            onClick={handleOpenCreateModal}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Crear Usuario
+          </button>
+        )}
       </div>
 
       {/* Métricas Rápidas */}
@@ -331,29 +358,43 @@ export default function AltasRfidView({ showToast }) {
           />
         </div>
 
-        <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto">
-          <span className="text-xs font-medium text-slate-500 mr-1">Filtrar:</span>
-          {['todos', 'Estudiante', 'Docente', 'Administrativo'].map((rol) => (
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            <span className="text-xs font-medium text-slate-500 mr-1">Filtrar:</span>
+            {['todos', ...appConfig.academic.roles].map((rol) => (
+              <button
+                key={rol}
+                onClick={() => {
+                  setRolFilter(rol);
+                  setCurrentPage(1);
+                }}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer capitalize whitespace-nowrap ${
+                  rolFilter === rol
+                    ? 'theme-btn-primary shadow-xs font-semibold'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {rol === 'todos' ? 'Todos los roles' : rol}
+              </button>
+            ))}
+          </div>
+
+          {appConfig.layout?.tables?.actionButtonPosition === 'toolbar' && (
             <button
-              key={rol}
-              onClick={() => {
-                setRolFilter(rol);
-                setCurrentPage(1);
-              }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer capitalize whitespace-nowrap ${
-                rolFilter === rol
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
+              onClick={handleOpenCreateModal}
+              className="inline-flex items-center justify-center gap-2 px-3.5 py-1.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer"
             >
-              {rol === 'todos' ? 'Todos los roles' : rol}
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Crear Usuario
             </button>
-          ))}
+          )}
         </div>
       </div>
 
       {/* Tabla Principal de Usuarios */}
-      <div className="bg-white border border-slate-200/90 rounded-xl overflow-hidden shadow-xs">
+      <div className={`bg-white border border-slate-200/90 ${cardRadius} overflow-hidden shadow-xs`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-700">
             <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 font-mono">
@@ -520,10 +561,9 @@ export default function AltasRfidView({ showToast }) {
                         onChange={handleChange}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800"
                       >
-                        <option value="Estudiante">Estudiante</option>
-                        <option value="Docente">Docente</option>
-                        <option value="Administrativo">Administrativo</option>
-                        <option value="Mantenimiento">Mantenimiento</option>
+                        {appConfig.academic.roles.map((r) => (
+                          <option key={r} value={r}>{r}</option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -536,7 +576,7 @@ export default function AltasRfidView({ showToast }) {
                         name="correo"
                         value={formData.correo}
                         onChange={handleChange}
-                        placeholder="usuario@benitto.edu.mx"
+                        placeholder="usuario@escuela.edu.mx"
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800"
                       />
                     </div>
@@ -556,14 +596,16 @@ export default function AltasRfidView({ showToast }) {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">Carrera / Área Académica</label>
-                    <input
-                      type="text"
+                    <select
                       name="area"
                       value={formData.area}
                       onChange={handleChange}
-                      placeholder="Ej. Ingeniería en Sistemas Computacionales"
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800"
-                    />
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800"
+                    >
+                      {appConfig.academic.areas.map((a) => (
+                        <option key={a} value={a}>{a}</option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Campo UID con botón ESP32 */}

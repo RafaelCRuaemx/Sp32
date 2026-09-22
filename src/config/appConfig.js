@@ -2,108 +2,243 @@
  * ==================================================================================
  * ARCHIVO DE CONFIGURACIÓN Y PERSONALIZACIÓN DEL SISTEMA (appConfig.js)
  * ==================================================================================
- * Este archivo central permite a cualquier equipo adaptar el sistema completo a su
- * identidad escolar, colores, fuentes y configuración de hardware sin modificar
- * código en los componentes ni en las vistas.
- *
- * Simplemente modifica los valores a continuación y guarda el archivo.
+ * Este archivo central es el "Centro de Mando" para cualquiera de los 5 equipos.
+ * Desde aquí puedes MOVER, OCULTAR, REORDENAR Y CAMBIAR todo lo que se muestra
+ * en pantalla sin tener que tocar ningún otro archivo de código.
  */
 
 export const appConfig = {
-  // 1. Identidad Institucional / Nombre del Plantel o Equipo
+  // ================================================================================
+  // 1. IDENTIDAD INSTITUCIONAL / PLANTEL ESCOLAR O NOMBRE DEL EQUIPO
+  // ================================================================================
   institution: {
-    // Nombre principal mostrado en la barra de navegación y encabezados
-    name: 'Control de Asistencia RFID',
-
-    // Nombre corto o siglas para identificadores (ej: 'CBTis', 'TecNM', 'Equipo 3')
-    shortName: 'RFID ESP32',
-
-    // Subtítulo del sistema
+    name: 'Control de Asistencia RFID',          // Nombre del sistema o escuela
+    shortName: 'RFID ESP32',                     // Siglas en el badge superior (ej. 'CBTIS 203', 'EQUIPO 2')
     subtitle: 'Sistema Escolar de Control de Accesos',
-
-    // Texto de derechos de autor en el pie de página
+    cct: 'CCT: 15DIT0042K',                      // Clave de Centro de Trabajo (opcional para reportes)
+    responsable: 'Ing. Coordinador de Proyecto', // Nombre del encargado / director
     copyright: '© 2026 Sistema de Asistencia RFID • Todos los derechos reservados',
   },
 
-  // 2. Configuración de Hardware (Lector ESP32)
+  // ================================================================================
+  // 2. DISPOSICIÓN Y MAQUETACIÓN VISUAL (LAYOUT)
+  // ¡Aquí puedes mover y reordenar los objetos en pantalla!
+  // ================================================================================
+  layout: {
+    // ------------------------------------------------------------------------------
+    // ¿DÓNDE QUIERES EL MENÚ DE NAVEGACIÓN?
+    // 'sidebar' o 'slidebar' -> Menú vertical a la izquierda estilo Dashboard Ejecutivo
+    // 'top'                  -> Barra horizontal superior clásica
+    // ------------------------------------------------------------------------------
+    navigationStyle: 'slidebar',
+
+    // ¿Qué pantalla quieres que se abra por defecto al entrar al sistema?
+    // Opciones: 'dashboard' | 'bitacora' | 'inasistencias' | 'altas'
+    defaultView: 'dashboard',
+
+    // ------------------------------------------------------------------------------
+    // ORDEN DE LAS PESTAÑAS DEL MENÚ:
+    // Puedes cambiar el orden en la lista para mover las pestañas de lugar
+    // ------------------------------------------------------------------------------
+    menuOrder: ['dashboard', 'bitacora', 'inasistencias', 'altas'],
+
+    // Configuración de la barra o menú de navegación:
+    navbar: {
+      showLiveClock: true,      // ¿Mostrar u ocultar el reloj digital en vivo? (true / false)
+      showHardwareBadge: true,  // ¿Mostrar u ocultar la IP del ESP32 en el Navbar? (true / false)
+      tabsAlignment: 'center',  // Alineación de las pestañas en modo 'top': 'left' | 'center' | 'right'
+    },
+
+    // ------------------------------------------------------------------------------
+    // CONFIGURACIÓN Y ORDEN DE ELEMENTOS EN EL DASHBOARD (PANEL DE CONTROL):
+    // ------------------------------------------------------------------------------
+    dashboard: {
+      // ORDEN DE LAS SECCIONES DEL DASHBOARD:
+      // Puedes moverlas de lugar cambiando el orden en este arreglo.
+      // Opciones: 'kpis' (tarjetas de resumen), 'charts' (gráfica y hardware), 'recentScans' (tabla)
+      // Ejemplo: si quieres ver primero la gráfica pon: ['charts', 'kpis', 'recentScans']
+      widgetsOrder: ['kpis', 'charts', 'recentScans'],
+
+      // Columnas para las tarjetas de métricas (KPIs): 2, 3 o 4 columnas por fila
+      kpiColumns: 4,
+
+      // Visibilidad de widgets individuales:
+      showHourlyChart: true,       // ¿Mostrar la gráfica de barras de flujo de alumnos? (true / false)
+      showHardwareCard: true,      // ¿Mostrar la tarjeta de telemetría del ESP32? (true / false)
+      showRecentScans: true,       // ¿Mostrar la mini-tabla de últimos accesos? (true / false)
+
+      // Disposición de la gráfica y la tarjeta de hardware:
+      // 'side-by-side' -> Lado a lado en columnas
+      // 'stacked'      -> Uno debajo del otro a ancho completo
+      chartLayout: 'side-by-side',
+    },
+
+    // ------------------------------------------------------------------------------
+    // POSICIÓN DE BOTONES EN LAS TABLAS:
+    // ------------------------------------------------------------------------------
+    tables: {
+      // ¿Dónde colocar el botón de acción principal ("Simular Lectura" / "Crear Usuario")?
+      // 'header'  -> Arriba a la derecha junto al título de la pantalla
+      // 'toolbar' -> Abajo integrado junto a la barra de búsqueda y filtros
+      actionButtonPosition: 'header',
+    },
+
+    // Estilo de bordes de las tarjetas, modales y tablas:
+    // 'none'    -> Bordes rectos y cuadrados (estilo técnico)
+    // 'rounded' -> Redondeo suave estándar (rounded-lg)
+    // 'curved'  -> Curvas modernas pronunciadas (rounded-2xl)
+    cards: {
+      borderRadius: 'curved',
+    },
+  },
+
+  // ================================================================================
+  // 3. MÓDULOS DEL SISTEMA Y NOMBRES DE PESTAÑAS
+  // Permite activar/desactivar vistas o renombrar los botones del menú
+  // ================================================================================
+  modules: {
+    dashboard: {
+      enabled: true,
+      label: 'Dashboard',
+    },
+    bitacora: {
+      enabled: true,
+      label: 'Registro de Asistencia',
+    },
+    inasistencias: {
+      enabled: true,
+      label: 'Inasistencias',
+    },
+    altas: {
+      enabled: true,
+      label: 'Usuarios',
+    },
+  },
+
+  // ================================================================================
+  // 4. PADRÓN ESCOLAR: ROLES, CARRERAS / ÁREAS Y GRUPOS
+  // Modifica estas listas según las carreras y grupos de tu plantel
+  // ================================================================================
+  academic: {
+    // Roles permitidos al crear o registrar usuarios:
+    roles: ['Estudiante', 'Docente', 'Administrativo', 'Visitante'],
+
+    // Carreras o Áreas asignadas a los usuarios:
+    areas: [
+      'Ing. en Sistemas Computacionales',
+      'Ing. Mecatrónica',
+      'Ing. Electrónica',
+      'Tronco Común',
+      'Administración Escolar',
+      'Docencia y Laboratorios',
+    ],
+
+    // Grupos disponibles para los alumnos:
+    groups: [
+      '1er Semestre - Grupo A',
+      '2do Semestre - Tronco Común',
+      '4to - Mecatrónica',
+      '6to - Sistemas A',
+      '6to - Electrónica B',
+    ],
+  },
+
+  // ================================================================================
+  // 5. HARDWARE (LECTOR RFID Y PUNTOS DE ACCESO)
+  // ================================================================================
   hardware: {
-    // Etiqueta del dispositivo
     label: 'ESP32',
-
-    // Nombre o ubicación del lector
-    name: 'Torniquete 01',
-
-    // Dirección IP o identificador del microcontrolador
+    name: 'Torniquete 01 - Puerta Principal',
     ip: '192.168.1.145',
-
-    // Estado del hardware ('Online' | 'Offline')
     status: 'Online',
+
+    // Puntos de acceso o torniquetes registrados en la escuela:
+    accessPoints: [
+      'Torniquete 01 - Puerta Principal',
+      'Torniquete 02 - Cafetería',
+      'Acceso Biblioteca',
+      'Laboratorio Cómputo B',
+    ],
   },
 
-  // 3. Paginación global para todas las tablas
+  // ================================================================================
+  // 6. REGLAS DE HORARIO ESCOLAR (CONTROL DE RETARDOS Y FALTAS)
+  // ================================================================================
+  schedule: {
+    horaEntrada: '07:15',    // Hora oficial límite para llegar "A tiempo"
+    horaTolerancia: '07:30', // Hora límite para "Retardo". Después de esto es "Inasistencia"
+  },
+
+  // ================================================================================
+  // 7. MOTIVOS OFICIALES PARA JUSTIFICAR INASISTENCIAS
+  // ================================================================================
+  justifications: [
+    'Incapacidad Médica IMSS / ISSEMYM',
+    'Cita Médica Oficial',
+    'Asunto Personal o Familiar',
+    'Comisión Académica o Deportiva',
+    'Trámite Administrativo Escolar',
+  ],
+
+  // ================================================================================
+  // 8. PAGINACIÓN GLOBAL EN TABLAS
+  // ================================================================================
   pagination: {
-    // Cantidad de filas mostradas por página (recomendado: 5, 8 o 10)
-    itemsPerPage: 5,
+    itemsPerPage: 5, // Cantidad de filas mostradas por página
   },
 
-  // 4. Tipografía del Sistema
-  // Opciones disponibles:
-  // - 'sans'  : Moderna, limpia e institucional (inter / system sans)
-  // - 'serif' : Tradicional, formal y elegante (georgia / serif)
-  // - 'mono'  : Técnica, estilo terminal / laboratorio (menlo / monospace)
+  // ================================================================================
+  // 9. TIPOGRAFÍA Y FUENTES
+  // Opciones: 'sans' (moderna/limpia), 'serif' (formal/clásica), 'mono' (técnica)
+  // ================================================================================
   fontFamily: 'sans',
 
-  // 5. Tema Visual y Paleta de Colores
-  // Puedes elegir uno de los temas predefinidos o personalizar los colores abajo:
-  // Temas predefinidos disponibles:
-  // 'slate'   -> Gris grafito neutro profesional
-  // 'azul'    -> Azul universitario / tecnológico
-  // 'guinda'  -> Guinda institucional / universitario clásico
-  // 'verde'   -> Verde esmeralda / ecológico / mecatrónica
-  // 'morado'  -> Púrpura innovación / robótica
+  // ================================================================================
+  // 10. TEMA VISUAL Y PALETA DE COLORES
+  // Opciones: 'azul' | 'guinda' | 'verde' | 'morado' | 'slate'
+  // ================================================================================
   themePreset: 'azul',
 
-  // Colores por tema (se aplican automáticamente según themePreset)
   presets: {
     slate: {
-      primary: '#0f172a',       // slate-900
-      primaryHover: '#1e293b',  // slate-800
+      primary: '#0f172a',
+      primaryHover: '#1e293b',
       primaryText: '#ffffff',
-      accent: '#334155',        // slate-700
-      accentLight: '#f1f5f9',   // slate-100
-      badgeBorder: '#cbd5e1',   // slate-300
+      accent: '#334155',
+      accentLight: '#f1f5f9',
+      badgeBorder: '#cbd5e1',
     },
     azul: {
-      primary: '#1d4ed8',       // blue-700
-      primaryHover: '#1e40af',  // blue-800
+      primary: '#1d4ed8',
+      primaryHover: '#1e40af',
       primaryText: '#ffffff',
-      accent: '#2563eb',        // blue-600
-      accentLight: '#eff6ff',   // blue-50
-      badgeBorder: '#bfdbfe',   // blue-200
+      accent: '#2563eb',
+      accentLight: '#eff6ff',
+      badgeBorder: '#bfdbfe',
     },
     guinda: {
-      primary: '#881337',       // rose-900 / vino tinto
-      primaryHover: '#700c2a',  // más oscuro
+      primary: '#881337',
+      primaryHover: '#700c2a',
       primaryText: '#ffffff',
-      accent: '#9f1239',        // rose-800
-      accentLight: '#fff1f2',   // rose-50
-      badgeBorder: '#fecdd3',   // rose-200
+      accent: '#9f1239',
+      accentLight: '#fff1f2',
+      badgeBorder: '#fecdd3',
     },
     verde: {
-      primary: '#047857',       // emerald-700
-      primaryHover: '#065f46',  // emerald-800
+      primary: '#047857',
+      primaryHover: '#065f46',
       primaryText: '#ffffff',
-      accent: '#059669',        // emerald-600
-      accentLight: '#ecfdf5',   // emerald-50
-      badgeBorder: '#a7f3d0',   // emerald-200
+      accent: '#059669',
+      accentLight: '#ecfdf5',
+      badgeBorder: '#a7f3d0',
     },
     morado: {
-      primary: '#6d28d9',       // purple-700
-      primaryHover: '#5b21b6',  // purple-800
+      primary: '#6d28d9',
+      primaryHover: '#5b21b6',
       primaryText: '#ffffff',
-      accent: '#7c3aed',        // purple-600
-      accentLight: '#f5f3ff',   // purple-50
-      badgeBorder: '#ddd6fe',   // purple-200
+      accent: '#7c3aed',
+      accentLight: '#f5f3ff',
+      badgeBorder: '#ddd6fe',
     },
   },
 };
@@ -116,3 +251,34 @@ export function getActiveTheme() {
   return preset;
 }
 
+/**
+ * Función auxiliar para detectar si la navegación está en modo barra lateral (Sidebar)
+ * Admite de forma tolerante: 'sidebar', 'slidebar', 'lateral', 'vertical', 'left', 'izq'
+ */
+export function isSidebarLayout() {
+  const style = String(appConfig.layout?.navigationStyle || '').toLowerCase().trim();
+  return (
+    style === 'sidebar' ||
+    style === 'slidebar' ||
+    style === 'lateral' ||
+    style === 'vertical' ||
+    style === 'left' ||
+    style === 'izq' ||
+    style === 'izquierda'
+  );
+}
+
+/**
+ * Función auxiliar para obtener la clase de redondeo de tarjetas
+ */
+export function getCardRadiusClass() {
+  switch (appConfig.layout?.cards?.borderRadius) {
+    case 'none':
+      return 'rounded-none';
+    case 'rounded':
+      return 'rounded-lg';
+    case 'curved':
+    default:
+      return 'rounded-2xl';
+  }
+}
