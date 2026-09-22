@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Pagination from '../components/Pagination';
 import { InasistenciasService } from '../services/api';
-import { appConfig, getCardRadiusClass } from '../config/appConfig';
+import { appConfig, getCardRadiusClass, getTableDensityClass, getCardShadowClass } from '../config/appConfig';
 
 /**
  * InasistenciasView - Pantalla 3: Control y justificación de ausencias
@@ -9,8 +9,11 @@ import { appConfig, getCardRadiusClass } from '../config/appConfig';
  */
 export default function InasistenciasView({ showToast }) {
   const cardRadius = getCardRadiusClass();
+  const cardShadow = getCardShadowClass();
+  const tableDensity = getTableDensityClass();
   const [inasistencias, setInasistencias] = useState([
     {
+      //mock de usuarios para realziar demo de como se veria el sistema
       id: 101,
       nombre: 'Mateo Hernandez Nava',
       matricula: '202303022',
@@ -84,7 +87,7 @@ export default function InasistenciasView({ showToast }) {
 
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = appConfig.pagination.itemsPerPage;
+  const [itemsPerPage, setItemsPerPage] = useState(appConfig.pagination?.itemsPerPage || 5);
   const totalPages = Math.ceil(filteredList.length / itemsPerPage) || 1;
   const paginatedInasistencias = filteredList.slice(
     (currentPage - 1) * itemsPerPage,
@@ -183,37 +186,37 @@ export default function InasistenciasView({ showToast }) {
       </div>
 
       {/* Tabla de Inasistencias */}
-      <div className={`bg-white border border-slate-200/90 ${cardRadius} overflow-hidden shadow-xs`}>
+      <div className={`bg-white border border-slate-200/90 ${cardRadius} overflow-hidden ${cardShadow}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-700">
             <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 font-mono">
               <tr>
-                <th scope="col" className="px-5 py-3.5">Alumno / Matrícula</th>
-                <th scope="col" className="px-5 py-3.5">Grupo</th>
-                <th scope="col" className="px-5 py-3.5">Fecha</th>
-                <th scope="col" className="px-5 py-3.5">Contacto Tutor</th>
-                <th scope="col" className="px-5 py-3.5">Estado</th>
-                <th scope="col" className="px-5 py-3.5 text-right">Acción</th>
+                <th scope="col" className={tableDensity}>Alumno / Matrícula</th>
+                <th scope="col" className={tableDensity}>Grupo</th>
+                <th scope="col" className={tableDensity}>Fecha</th>
+                <th scope="col" className={tableDensity}>Contacto Tutor</th>
+                <th scope="col" className={tableDensity}>Estado</th>
+                <th scope="col" className={`${tableDensity} text-right`}>Acción</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredList.length > 0 ? (
                 paginatedInasistencias.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-5 py-3 whitespace-nowrap">
+                    <td className={`${tableDensity} whitespace-nowrap`}>
                       <div className="font-semibold text-slate-900">{item.nombre}</div>
                       <div className="text-[11px] font-mono text-slate-500">{item.matricula}</div>
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-slate-600">
+                    <td className={`${tableDensity} whitespace-nowrap text-slate-600`}>
                       {item.grupo}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-slate-500 font-mono">
+                    <td className={`${tableDensity} whitespace-nowrap text-slate-500 font-mono`}>
                       {item.fecha}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-slate-600 font-mono">
+                    <td className={`${tableDensity} whitespace-nowrap text-slate-600 font-mono`}>
                       {item.tutorTelefono}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap">
+                    <td className={`${tableDensity} whitespace-nowrap`}>
                       {item.estado === 'justificada' ? (
                         <div>
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -225,11 +228,11 @@ export default function InasistenciasView({ showToast }) {
                         </div>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                          Injustificada
+                            Injustificada
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-right">
+                    <td className={`${tableDensity} whitespace-nowrap text-right`}>
                       {item.estado === 'injustificada' ? (
                         <button
                           onClick={() => handleOpenJustificar(item)}
@@ -261,6 +264,7 @@ export default function InasistenciasView({ showToast }) {
           onPageChange={setCurrentPage}
           totalItems={filteredList.length}
           itemsPerPage={itemsPerPage}
+          onPageSizeChange={setItemsPerPage}
         />
       </div>
 

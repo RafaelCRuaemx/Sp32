@@ -10,7 +10,7 @@ Bienvenido a la guía oficial de configuración para los **5 equipos** del proye
 ---
 
 ## 📑 Índice de Contenidos
-1. [Navegación y Layout (Barra Superior vs Menú Lateral)](#1-navegación-y-layout)
+1. [Navegación y Layout (Barra Superior vs Menú Lateral y Temas)](#1-navegación-y-layout)
 2. [Reordenar y Mover Elementos](#2-reordenar-y-mover-elementos)
 3. [Paletas de Color y Temas](#3-paletas-de-color-y-temas)
 4. [Tipografía y Fuentes](#4-tipografía-y-fuentes)
@@ -19,14 +19,16 @@ Bienvenido a la guía oficial de configuración para los **5 equipos** del proye
 7. [Padrón Escolar (Carreras, Roles y Grupos)](#7-padrón-escolar)
 8. [Hardware ESP32 y Puntos de Acceso](#8-hardware-esp32-y-puntos-de-acceso)
 9. [Horarios y Tolerancia de Retardos](#9-horarios-y-tolerancia-de-retardos)
-10. [Motivos de Justificación de Faltas](#10-motivos-de-justificación-de-faltas)
-11. [Ejemplos Listos para Copiar y Pegar](#11-ejemplos-listos-para-copiar)
+10. [Paginación Global e Interactiva en Tablas](#10-paginación-global-e-interactiva-en-tablas)
+11. [Apariencia Visual (Tamaño de Letra, Densidad y Sombras)](#11-apariencia-visual-tamaño-de-letra-densidad-y-sombras)
+12. [Motivos de Justificación de Faltas](#12-motivos-de-justificación-de-faltas)
+13. [Ejemplos Listos para Copiar y Pegar](#13-ejemplos-listos-para-copiar)
 
 ---
 
 ## 1. Navegación y Layout
 
-En el bloque `layout`, defines **dónde** se ubica el menú de navegación:
+En el bloque `layout`, defines **dónde** se ubica el menú de navegación y cómo luce:
 
 ```javascript
 layout: {
@@ -35,10 +37,18 @@ layout: {
   // 'top'                     -> Barra horizontal superior clásica
   navigationStyle: 'sidebar',
 
+  // Configuración de la barra horizontal (modo 'top'):
   navbar: {
     showLiveClock: true,      // true: muestra el reloj digital | false: lo oculta
     showHardwareBadge: true,  // true: muestra el estado del ESP32 | false: lo oculta
     tabsAlignment: 'center',  // 'left' | 'center' | 'right' (solo aplica en modo 'top')
+  },
+
+  // Configuración del menú lateral (modo 'sidebar'):
+  sidebar: {
+    theme: 'light',           // 'light' (blanco) | 'dark' (oscuro ejecutivo) | 'brand' (del color del tema)
+    width: 'normal',          // 'compact' (delgado) | 'normal' (estándar) | 'wide' (ancho)
+    showLogo: true,           // true: muestra el ícono/logo escolar | false: lo oculta
   }
 }
 ```
@@ -220,14 +230,60 @@ Reglas de tiempo para la jornada escolar:
 
 ```javascript
 schedule: {
-  horaEntrada: '07:00',    // Llegadas antes de esta hora = "A tiempo"
-  horaTolerancia: '07:15', // Llegadas entre 07:00 y 07:15 = "Retardo" (posterior = Falta)
+  horaEntrada: '07:15',       // Llegadas antes de esta hora = "A tiempo"
+  horaTolerancia: '07:30',    // Llegadas entre 07:15 y 07:30 = "Retardo" (posterior = Falta)
+  toleranciaMinutos: 15,      // Tolerancia en minutos para retardo
+  limiteFaltaMinutos: 30,     // Minutos a partir de los cuales se considera falta definitiva
 }
 ```
 
 ---
 
-## 10. Motivos de Justificación de Faltas
+## 10. Paginación Global e Interactiva en Tablas
+
+Configura la paginación para las tablas de Asistencia, Inasistencias y Usuarios:
+
+```javascript
+pagination: {
+  itemsPerPage: 5,            // Filas mostradas por página por defecto (5, 10, 15, 20)
+  allowUserPageSize: true,    // ¿Permitir que el usuario cambie el número de filas en pantalla? (true / false)
+  pageSizes: [5, 10, 25, 50], // Opciones que aparecen en el selector desplegable
+  showTotalCount: true,       // ¿Mostrar leyenda "Mostrando X a Y de Z registros"?
+  style: 'numeric',           // 'numeric' (botones con números 1, 2, 3...) o 'simple' (Anterior / Siguiente)
+}
+```
+
+---
+
+## 11. Apariencia Visual (Tamaño de Letra, Densidad y Sombras)
+
+Controla la escala estética general sin escribir CSS:
+
+```javascript
+appearance: {
+  // Escala de tamaño de texto general:
+  // 'compact' -> 14px (ideal para monitores de torniquetes o pantallas pequeñas)
+  // 'normal'  -> 15px (equilibrado estándar)
+  // 'large'   -> 17px (ideal para pantallas lejanas o quioscos)
+  fontSize: 'normal',
+
+  // Densidad y espaciado de renglones en tablas:
+  // 'compact' -> Padding ajustado para ver más filas de un vistazo
+  // 'normal'  -> Espaciado equilibrado
+  // 'relaxed' -> Filas amplias con mayor espacio de lectura
+  tableDensity: 'normal',
+
+  // Nivel de elevación y sombra de las tarjetas:
+  // 'none'     -> Diseño plano moderno (flat)
+  // 'soft'     -> Sombra suave moderna (shadow-xs/sm)
+  // 'elevated' -> Tarjetas flotantes con sombra pronunciada (shadow-lg)
+  cardShadow: 'soft',
+}
+```
+
+---
+
+## 12. Motivos de Justificación de Faltas
 
 Modifica la lista de motivos oficiales que aparecen en el modal de justificaciones:
 
@@ -243,7 +299,7 @@ justifications: [
 
 ---
 
-## 11. Ejemplos Listos para Copiar
+## 13. Ejemplos Listos para Copiar
 
 ### Ejemplo A: Configuración "Estilo Tecnológico / Robótica"
 ```javascript

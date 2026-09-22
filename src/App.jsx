@@ -45,6 +45,16 @@ function App() {
       fontFamilyStyle = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
     }
     root.style.setProperty('--font-family-base', fontFamilyStyle);
+
+    // Escala de tamaño de fuente general (compact, normal, large)
+    const fontSize = appConfig.appearance?.fontSize || 'normal';
+    if (fontSize === 'compact') {
+      root.style.fontSize = '14px';
+    } else if (fontSize === 'large') {
+      root.style.fontSize = '17px';
+    } else {
+      root.style.fontSize = '15px';
+    }
   }, []);
 
   const showToast = (title, message, type = 'success') => {

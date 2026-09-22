@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { UsuariosRfidService } from '../services/api';
 import Pagination from '../components/Pagination';
-import { appConfig, getCardRadiusClass } from '../config/appConfig';
+import { appConfig, getCardRadiusClass, getTableDensityClass, getCardShadowClass } from '../config/appConfig';
 
 /**
  * AltasRfidView - Pantalla 4: Gestión Integral de Usuarios y Padrón Escolar
@@ -12,7 +12,10 @@ import { appConfig, getCardRadiusClass } from '../config/appConfig';
  */
 export default function AltasRfidView({ showToast }) {
   const cardRadius = getCardRadiusClass();
+  const cardShadow = getCardShadowClass();
+  const tableDensity = getTableDensityClass();
   const [usuarios, setUsuarios] = useState([
+    //mock de usuarios apra realizar demo de como se veria el sistema
     {
       id: 1,
       nombre: 'Valeria Morales Cruz',
@@ -275,7 +278,7 @@ export default function AltasRfidView({ showToast }) {
 
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = appConfig.pagination.itemsPerPage;
+  const [itemsPerPage, setItemsPerPage] = useState(appConfig.pagination?.itemsPerPage || 5);
   const totalPages = Math.ceil(usuariosFiltrados.length / itemsPerPage) || 1;
   const paginatedUsuarios = usuariosFiltrados.slice(
     (currentPage - 1) * itemsPerPage,
@@ -394,24 +397,24 @@ export default function AltasRfidView({ showToast }) {
       </div>
 
       {/* Tabla Principal de Usuarios */}
-      <div className={`bg-white border border-slate-200/90 ${cardRadius} overflow-hidden shadow-xs`}>
+      <div className={`bg-white border border-slate-200/90 ${cardRadius} overflow-hidden ${cardShadow}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-700">
             <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 font-mono">
               <tr>
-                <th scope="col" className="px-5 py-3.5">Usuario</th>
-                <th scope="col" className="px-5 py-3.5">Rol y Carrera / Área</th>
-                <th scope="col" className="px-5 py-3.5">Contacto</th>
-                <th scope="col" className="px-5 py-3.5">Credencial RFID (ESP32)</th>
-                <th scope="col" className="px-5 py-3.5">Estado</th>
-                <th scope="col" className="px-5 py-3.5 text-right">Acciones</th>
+                <th scope="col" className={tableDensity}>Usuario</th>
+                <th scope="col" className={tableDensity}>Rol y Carrera / Área</th>
+                <th scope="col" className={tableDensity}>Contacto</th>
+                <th scope="col" className={tableDensity}>Credencial RFID (ESP32)</th>
+                <th scope="col" className={tableDensity}>Estado</th>
+                <th scope="col" className={`${tableDensity} text-right`}>Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {usuariosFiltrados.length > 0 ? (
                 paginatedUsuarios.map((u) => (
                   <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-5 py-3.5 whitespace-nowrap">
+                    <td className={`${tableDensity} whitespace-nowrap`}>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-700 font-mono">
                           {u.nombre.substring(0, 2).toUpperCase()}
@@ -423,33 +426,33 @@ export default function AltasRfidView({ showToast }) {
                       </div>
                     </td>
 
-                    <td className="px-5 py-3.5 whitespace-nowrap">
+                    <td className={`${tableDensity} whitespace-nowrap`}>
                       <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${getRolBadge(u.rol)}`}>
                         {u.rol}
                       </span>
                       <p className="text-[11px] text-slate-500 mt-1">{u.area}</p>
                     </td>
 
-                    <td className="px-5 py-3.5 whitespace-nowrap font-mono text-[11px]">
+                    <td className={`${tableDensity} whitespace-nowrap font-mono text-[11px]`}>
                       <p className="text-slate-700">{u.correo}</p>
                       <p className="text-slate-400">{u.telefono}</p>
                     </td>
 
-                    <td className="px-5 py-3.5 whitespace-nowrap">
+                    <td className={`${tableDensity} whitespace-nowrap`}>
                       <span className="font-mono text-xs px-2.5 py-1 bg-slate-100 text-indigo-900 border border-slate-200 rounded font-semibold">
                         {u.uidRfid}
                       </span>
                       <span className="text-[10px] text-slate-400 block font-mono mt-1">Alta: {u.fechaAlta}</span>
                     </td>
 
-                    <td className="px-5 py-3.5 whitespace-nowrap">
+                    <td className={`${tableDensity} whitespace-nowrap`}>
                       <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                         Activo
                       </span>
                     </td>
 
-                    <td className="px-5 py-3.5 whitespace-nowrap text-right">
+                    <td className={`${tableDensity} whitespace-nowrap text-right`}>
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => handleOpenEditModal(u)}
@@ -491,6 +494,7 @@ export default function AltasRfidView({ showToast }) {
           onPageChange={setCurrentPage}
           totalItems={usuariosFiltrados.length}
           itemsPerPage={itemsPerPage}
+          onPageSizeChange={setItemsPerPage}
         />
       </div>
 

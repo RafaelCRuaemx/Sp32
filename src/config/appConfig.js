@@ -15,55 +15,58 @@ export const appConfig = {
     name: 'Control de Asistencia RFID',          // Nombre del sistema o escuela
     shortName: 'RFID ESP32',                     // Siglas en el badge superior (ej. 'CBTIS 203', 'EQUIPO 2')
     subtitle: 'Sistema Escolar de Control de Accesos',
-    cct: 'CCT: 15DIT0042K',                      // Clave de Centro de Trabajo (opcional para reportes)
+  //  cct: 'CCT: 15DIT0042K',                      // Clave de Centro de Trabajo (opcional para reportes)
     responsable: 'Ing. Coordinador de Proyecto', // Nombre del encargado / director
     copyright: '© 2026 Sistema de Asistencia RFID • Todos los derechos reservados',
   },
 
-  // ================================================================================
   // 2. DISPOSICIÓN Y MAQUETACIÓN VISUAL (LAYOUT)
   // ¡Aquí puedes mover y reordenar los objetos en pantalla!
-  // ================================================================================
   layout: {
-    // ------------------------------------------------------------------------------
     // ¿DÓNDE QUIERES EL MENÚ DE NAVEGACIÓN?
     // 'sidebar' o 'slidebar' -> Menú vertical a la izquierda estilo Dashboard Ejecutivo
     // 'top'                  -> Barra horizontal superior clásica
-    // ------------------------------------------------------------------------------
     navigationStyle: 'slidebar',
 
     // ¿Qué pantalla quieres que se abra por defecto al entrar al sistema?
     // Opciones: 'dashboard' | 'bitacora' | 'inasistencias' | 'altas'
     defaultView: 'dashboard',
 
-    // ------------------------------------------------------------------------------
+    
     // ORDEN DE LAS PESTAÑAS DEL MENÚ:
     // Puedes cambiar el orden en la lista para mover las pestañas de lugar
-    // ------------------------------------------------------------------------------
+    // opciones de cambiar el orden:
+    //'dashboard', 'bitacora', 'inasistencias', 'altas'
     menuOrder: ['dashboard', 'bitacora', 'inasistencias', 'altas'],
 
-    // Configuración de la barra o menú de navegación:
+    // Configuración de la barra horizontal (modo 'top'):
     navbar: {
       showLiveClock: true,      // ¿Mostrar u ocultar el reloj digital en vivo? (true / false)
       showHardwareBadge: true,  // ¿Mostrar u ocultar la IP del ESP32 en el Navbar? (true / false)
       tabsAlignment: 'center',  // Alineación de las pestañas en modo 'top': 'left' | 'center' | 'right'
     },
 
-    // ------------------------------------------------------------------------------
+    // Configuración de la barra lateral (modo 'sidebar' o 'slidebar'):
+    sidebar: {
+      theme: 'light',           // 'light' (blanco minimalista) | 'dark' (ejecutivo oscuro) | 'brand' (del color del tema activo)
+      width: 'normal',          // 'compact' (w-56) | 'normal' (w-64) | 'wide' (w-72)
+      showLogo: true,           // ¿Mostrar ícono/logo de la escuela en la cabecera del menú? (true / false)
+    },
+
+    
     // CONFIGURACIÓN Y ORDEN DE ELEMENTOS EN EL DASHBOARD (PANEL DE CONTROL):
-    // ------------------------------------------------------------------------------
     dashboard: {
       // ORDEN DE LAS SECCIONES DEL DASHBOARD:
       // Puedes moverlas de lugar cambiando el orden en este arreglo.
       // Opciones: 'kpis' (tarjetas de resumen), 'charts' (gráfica y hardware), 'recentScans' (tabla)
       // Ejemplo: si quieres ver primero la gráfica pon: ['charts', 'kpis', 'recentScans']
-      widgetsOrder: ['kpis', 'charts', 'recentScans'],
+      widgetsOrder: ['charts', 'kpis', 'recentScans'],
 
       // Columnas para las tarjetas de métricas (KPIs): 2, 3 o 4 columnas por fila
       kpiColumns: 4,
 
       // Visibilidad de widgets individuales:
-      showHourlyChart: true,       // ¿Mostrar la gráfica de barras de flujo de alumnos? (true / false)
+      showHourlyChart: true,       // ¿Mostrar la gráfica de barras de flujo de usuarios (true / false)
       showHardwareCard: true,      // ¿Mostrar la tarjeta de telemetría del ESP32? (true / false)
       showRecentScans: true,       // ¿Mostrar la mini-tabla de últimos accesos? (true / false)
 
@@ -88,7 +91,7 @@ export const appConfig = {
     // 'rounded' -> Redondeo suave estándar (rounded-lg)
     // 'curved'  -> Curvas modernas pronunciadas (rounded-2xl)
     cards: {
-      borderRadius: 'curved',
+      borderRadius: 'none',
     },
   },
 
@@ -116,7 +119,7 @@ export const appConfig = {
   },
 
   // ================================================================================
-  // 4. PADRÓN ESCOLAR: ROLES, CARRERAS / ÁREAS Y GRUPOS
+  // 4.Datos de roles para agregar a los usuarios y asignacion de areas
   // Modifica estas listas según las carreras y grupos de tu plantel
   // ================================================================================
   academic: {
@@ -165,8 +168,10 @@ export const appConfig = {
   // 6. REGLAS DE HORARIO ESCOLAR (CONTROL DE RETARDOS Y FALTAS)
   // ================================================================================
   schedule: {
-    horaEntrada: '07:15',    // Hora oficial límite para llegar "A tiempo"
-    horaTolerancia: '07:30', // Hora límite para "Retardo". Después de esto es "Inasistencia"
+    horaEntrada: '07:15',       // Hora oficial límite para llegar "A tiempo"
+    horaTolerancia: '07:30',    // Hora límite para "Retardo". Después de esto es "Inasistencia"
+    toleranciaMinutos: 15,      // Tolerancia en minutos para retardo
+    limiteFaltaMinutos: 30,     // Minutos a partir de los cuales se registra falta
   },
 
   // ================================================================================
@@ -184,17 +189,30 @@ export const appConfig = {
   // 8. PAGINACIÓN GLOBAL EN TABLAS
   // ================================================================================
   pagination: {
-    itemsPerPage: 5, // Cantidad de filas mostradas por página
+    itemsPerPage: 5,            // Filas mostradas por página por defecto (5, 10, 15, 20)
+    allowUserPageSize: true,    // ¿Permitir al usuario cambiar el número de filas en pantalla? (true / false)
+    pageSizes: [5, 10, 25, 50], // Opciones disponibles en el selector
+    showTotalCount: true,       // ¿Mostrar leyenda "Mostrando X a Y de Z registros"? (true / false)
+    style: 'numeric',           // 'numeric' (botones 1, 2, 3...) o 'simple' (Anterior / Siguiente)
   },
 
   // ================================================================================
-  // 9. TIPOGRAFÍA Y FUENTES
+  // 9. APARIENCIA VISUAL: TAMAÑO DE LETRA, DENSIDAD Y SOMBRAS
+  // ================================================================================
+  appearance: {
+    fontSize: 'normal',         // Escala de fuente general: 'compact' (14px) | 'normal' (15px) | 'large' (17px)
+    tableDensity: 'normal',     // Densidad de renglones en tablas: 'compact' (ajustado) | 'normal' (estándar) | 'relaxed' (amplio)
+    cardShadow: 'soft',         // Sombra y profundidad de tarjetas: 'none' (plano) | 'soft' (suave) | 'elevated' (flotante)
+  },
+
+  // ================================================================================
+  // 10. TIPOGRAFÍA Y FUENTES
   // Opciones: 'sans' (moderna/limpia), 'serif' (formal/clásica), 'mono' (técnica)
   // ================================================================================
   fontFamily: 'sans',
 
   // ================================================================================
-  // 10. TEMA VISUAL Y PALETA DE COLORES
+  // 11. TEMA VISUAL Y PALETA DE COLORES
   // Opciones: 'azul' | 'guinda' | 'verde' | 'morado' | 'slate'
   // ================================================================================
   themePreset: 'azul',
@@ -282,3 +300,73 @@ export function getCardRadiusClass() {
       return 'rounded-2xl';
   }
 }
+
+/**
+ * Función auxiliar para obtener las clases y estilo del Sidebar según el tema configurado
+ */
+export function getSidebarClasses() {
+  const theme = appConfig.layout?.sidebar?.theme || 'light';
+  const width = appConfig.layout?.sidebar?.width || 'normal';
+
+  const widthClass = width === 'compact' ? 'w-56' : width === 'wide' ? 'w-72' : 'w-64';
+
+  let themeClasses = 'bg-white border-r border-slate-200/90 text-slate-800';
+  let navActiveClasses = 'theme-btn-primary shadow-xs font-semibold';
+  let navInactiveClasses = 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80';
+  let cardBgClasses = 'bg-slate-50 border-slate-200/80 text-slate-800';
+  let headerBorderClasses = 'border-slate-100';
+
+  if (theme === 'dark') {
+    themeClasses = 'bg-slate-900 border-r border-slate-800 text-slate-100';
+    navActiveClasses = 'theme-btn-primary text-white font-semibold shadow-md';
+    navInactiveClasses = 'text-slate-400 hover:text-white hover:bg-slate-800/80';
+    cardBgClasses = 'bg-slate-800/90 border-slate-700 text-slate-100';
+    headerBorderClasses = 'border-slate-800';
+  } else if (theme === 'brand') {
+    themeClasses = 'bg-[var(--color-primary)] border-r border-black/10 text-white';
+    navActiveClasses = 'bg-white/20 text-white font-bold backdrop-blur-xs shadow-xs';
+    navInactiveClasses = 'text-white/80 hover:text-white hover:bg-white/10';
+    cardBgClasses = 'bg-black/15 border-white/10 text-white';
+    headerBorderClasses = 'border-white/15';
+  }
+
+  return {
+    aside: `${widthClass} ${themeClasses} h-screen sticky top-0 flex flex-col justify-between p-5 z-40 shrink-0`,
+    navActive: navActiveClasses,
+    navInactive: navInactiveClasses,
+    footerCard: cardBgClasses,
+    headerBorder: headerBorderClasses,
+    isDarkOrBrand: theme === 'dark' || theme === 'brand',
+  };
+}
+
+/**
+ * Función auxiliar para obtener la densidad de espaciado en tablas
+ */
+export function getTableDensityClass() {
+  switch (appConfig.appearance?.tableDensity) {
+    case 'compact':
+      return 'py-2 px-4';
+    case 'relaxed':
+      return 'py-4.5 px-6';
+    case 'normal':
+    default:
+      return 'py-3.5 px-5';
+  }
+}
+
+/**
+ * Función auxiliar para obtener la clase de sombra de tarjetas
+ */
+export function getCardShadowClass() {
+  switch (appConfig.appearance?.cardShadow) {
+    case 'none':
+      return 'shadow-none';
+    case 'elevated':
+      return 'shadow-lg';
+    case 'soft':
+    default:
+      return 'shadow-xs';
+  }
+}
+

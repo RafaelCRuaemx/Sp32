@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { BitacoraService } from '../services/api';
-import Pagination from '../components/Pagination';
-import { appConfig, getCardRadiusClass } from '../config/appConfig';
+// [NUEVO] Componente reutilizable DataTable potenciado por TanStack Table (ordenamiento, busqueda y CSV)
+import DataTable from '../components/DataTables';
+import { appConfig } from '../config/appConfig';
 
 /**
  * BitacoraView - Pantalla 2: Historial en tiempo real de accesos RFID
- * Conexión lista con Django API (BitacoraService) y notificaciones Toast
+ * Conexión lista con Django API (BitacoraService), TanStack Table y notificaciones Toast
  */
 export default function BitacoraView({ showToast }) {
-  const cardRadius = getCardRadiusClass();
   const [logs, setLogs] = useState([
     {
+      // mock de usuarios para realizar demo de como se veria el sistema
       id: 1,
       nombre: 'Valeria Morales Cruz',
       matricula: '202303001',
@@ -75,28 +76,12 @@ export default function BitacoraView({ showToast }) {
     },
   ]);
 
-  const [searchTerm, setSearchTerm] = useState('');
+  // [NUEVO] Filtro de estado por botones ("Todos", "A tiempo", "Retardo", "Denegado")
   const [statusFilter, setStatusFilter] = useState('todos');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = appConfig.pagination.itemsPerPage;
 
-  const filteredLogs = logs.filter((log) => {
-    const matchesSearch =
-      log.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.matricula.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.uid.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === 'todos' ? true : log.estado === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage) || 1;
-  const paginatedLogs = filteredLogs.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // [NUEVO] Datos filtrados por estado para alimentar a TanStack Table
+  const displayLogs =
+    statusFilter === 'todos' ? logs : logs.filter((log) => log.estado === statusFilter);
 
   const simularEscaneo = async () => {
     const nombresDemo = [
@@ -161,6 +146,54 @@ export default function BitacoraView({ showToast }) {
     }
   };
 
+  // ==============================================================================
+  // [NUEVO] DEFINICIÓN DE COLUMNAS PARA TANSTACK TABLE (DATATABLES)
+  // Cada columna define su identificador (accessorKey), título (header) y contenido (cell)
+  // ==============================================================================
+  const columns = [
+    {
+      accessorKey: 'nombre',
+      header: 'Usuario',
+      cell: (info) => (
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-700 font-mono">
+            {info.getValue().substring(0, 2).toUpperCase()}
+          </div>
+          <span className="font-medium text-slate-900">{info.getValue()}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'matricula',
+      header: 'Matrícula',
+      cell: (info) => <span className="font-mono text-slate-600">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: 'uid',
+      header: 'UID RFID',
+      cell: (info) => (
+        <span className="font-mono text-xs px-2.5 py-1 bg-slate-100 text-indigo-900 border border-slate-200 rounded font-semibold">
+          {info.getValue()}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'hora',
+      header: 'Fecha y Hora',
+      cell: (info) => <span className="font-mono text-slate-500">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: 'puerta',
+      header: 'Punto Acceso',
+      cell: (info) => <span className="text-slate-600">{info.getValue()}</span>,
+    },
+    {
+      accessorKey: 'estado',
+      header: 'Estado',
+      cell: (info) => getStatusBadge(info.getValue()),
+    },
+  ];
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -185,126 +218,54 @@ export default function BitacoraView({ showToast }) {
         )}
       </div>
 
-      {/* Controles de búsqueda y filtros */}
-      <div className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-xs flex flex-col md:flex-row gap-4 justify-between items-center">
-        {/* Input de búsqueda */}
-        <div className="relative w-full md:w-96">
-          <input
-            type="text"
-            placeholder="Buscar por nombre, matrícula o UID..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
-          />
-        </div>
+      {/* ============================================================================== */}
+      {/* [NUEVO] RENDERIZADO DEL COMPONENTE DATATABLE (TANSTACK TABLE)                   */}
+      {/* Incluye buscador en vivo, ordenamiento por columnas (clic ▲/▼), paginación    */}
+      {/* interactiva y botón de descarga a Excel/CSV.                                   */}
+      {/* ============================================================================== */}
+      <DataTable
+        data={displayLogs}
+        columns={columns}
+        searchPlaceholder="Buscar por nombre, matrícula o UID..."
+        exportFileName="bitacora_accesos_rfid"
+        extraToolbar={
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1 overflow-x-auto">
+              <span className="text-xs font-medium text-slate-500 mr-1">Estado:</span>
+              {[
+                { id: 'todos', label: 'Todos' },
+                { id: 'a_tiempo', label: 'A Tiempo' },
+                { id: 'retardo', label: 'Retardo' },
+                { id: 'denegado', label: 'Denegado' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setStatusFilter(tab.id)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+                    statusFilter === tab.id
+                      ? 'theme-btn-primary shadow-xs'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-        {/* Filtros de estado y Botón en Toolbar si está configurado */}
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <div className="flex items-center gap-1.5 overflow-x-auto">
-            <span className="text-xs font-medium text-slate-500 mr-1">Estado:</span>
-            {[
-              { id: 'todos', label: 'Todos' },
-              { id: 'a_tiempo', label: 'A Tiempo' },
-              { id: 'retardo', label: 'Retardo' },
-              { id: 'denegado', label: 'Denegado' },
-            ].map((tab) => (
+            {appConfig.layout?.tables?.actionButtonPosition === 'toolbar' && (
               <button
-                key={tab.id}
-                onClick={() => {
-                  setStatusFilter(tab.id);
-                  setCurrentPage(1);
-                }}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
-                  statusFilter === tab.id
-                    ? 'theme-btn-primary shadow-xs'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
+                onClick={simularEscaneo}
+                className="flex items-center justify-center gap-2 px-3 py-1.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
               >
-                {tab.label}
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Simular Lectura
               </button>
-            ))}
+            )}
           </div>
-
-          {appConfig.layout?.tables?.actionButtonPosition === 'toolbar' && (
-            <button
-              onClick={simularEscaneo}
-              className="flex items-center justify-center gap-2 px-3 py-1.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-              </svg>
-              Simular Lectura
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Tabla limpia y nítida */}
-      <div className={`bg-white border border-slate-200/90 ${cardRadius} overflow-hidden shadow-xs`}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 font-mono">
-              <tr>
-                <th scope="col" className="px-5 py-3.5">Usuario</th>
-                <th scope="col" className="px-5 py-3.5">Matrícula</th>
-                <th scope="col" className="px-5 py-3.5">UID RFID</th>
-                <th scope="col" className="px-5 py-3.5">Fecha y Hora</th>
-                <th scope="col" className="px-5 py-3.5">Punto Acceso</th>
-                <th scope="col" className="px-5 py-3.5">Estado</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredLogs.length > 0 ? (
-                paginatedLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-5 py-3 whitespace-nowrap font-medium text-slate-900 flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-700 font-mono">
-                        {log.nombre.substring(0, 2).toUpperCase()}
-                      </div>
-                      <span>{log.nombre}</span>
-                    </td>
-                    <td className="px-5 py-3 whitespace-nowrap font-mono text-slate-600">
-                      {log.matricula}
-                    </td>
-                    <td className="px-5 py-3 whitespace-nowrap">
-                      <span className="font-mono text-xs px-2.5 py-1 bg-slate-100 text-indigo-900 border border-slate-200 rounded font-semibold">
-                        {log.uid}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-slate-500 font-mono">
-                      {log.hora}
-                    </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-slate-600">
-                      {log.puerta}
-                    </td>
-                    <td className="px-5 py-3 whitespace-nowrap">
-                      {getStatusBadge(log.estado)}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="px-5 py-10 text-center text-slate-500 text-xs">
-                    No se encontraron registros de accesos.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Paginación */}
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          totalItems={filteredLogs.length}
-          itemsPerPage={itemsPerPage}
-        />
-      </div>
+        }
+      />
     </div>
   );
 }
