@@ -68,6 +68,7 @@ export default function DataTable({
     // Obtener nombres de columnas visibles
     const visibleColumns = table.getVisibleLeafColumns().filter((col) => col.id !== 'acciones');
     const headers = visibleColumns.map((col) => col.columnDef.header || col.id);
+    const delimiter = appConfig.reports?.csvDelimiter || ',';
 
     // Obtener los datos de cada fila visible
     const csvRows = rows.map((row) =>
@@ -77,16 +78,21 @@ export default function DataTable({
           const cleanVal = val === null || val === undefined ? '' : String(val).replace(/"/g, '""');
           return `"${cleanVal}"`;
         })
-        .join(',')
+        .join(delimiter)
     );
 
+    // Formatear nombre de archivo con prefijo y fecha según appConfig.reports
+    const prefix = appConfig.reports?.fileNamePrefix || '';
+    const dateStr = appConfig.reports?.includeTimestamp !== false ? `_${new Date().toISOString().split('T')[0]}` : '';
+    const fullFileName = `${prefix}${exportFileName}${dateStr}.csv`;
+
     // Crear archivo descargable con codificación UTF-8 BOM para acentos en Excel
-    const csvContent = '\uFEFF' + [headers.join(','), ...csvRows].join('\n');
+    const csvContent = '\uFEFF' + [headers.join(delimiter), ...csvRows].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `${exportFileName}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', fullFileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -99,7 +105,7 @@ export default function DataTable({
   return (
     <div className="space-y-4">
       {/* Barra de herramientas con búsqueda y exportación */}
-      <div className="flex flex-col md:flex-row gap-3 justify-between items-center bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-xs">
+      <div className={`flex flex-col md:flex-row gap-3 justify-between items-center bg-white border border-slate-200/90 ${cardRadius} p-3.5 shadow-xs`}>
         <div className="relative w-full md:w-80">
           <input
             type="text"
@@ -113,17 +119,19 @@ export default function DataTable({
         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
           {extraToolbar}
 
-          {/* Botón de exportación a CSV */}
-          <button
-            onClick={exportarCSV}
-            title="Descargar datos en archivo compatible con Excel"
-            className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
-          >
-            <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Exportar CSV
-          </button>
+          {/* Botón de exportación a CSV (respetando seguridad) */}
+          {appConfig.security?.allowExportCsv !== false && (
+            <button
+              onClick={exportarCSV}
+              title="Descargar datos en archivo compatible con Excel"
+              className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Exportar CSV
+            </button>
+          )}
         </div>
       </div>
 
@@ -184,27 +192,31 @@ export default function DataTable({
         {/* Paginación de TanStack Table */}
         <div className="bg-slate-50/90 px-5 py-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
           <div className="flex items-center gap-3">
-            <span>
-              Mostrando <span className="font-semibold text-slate-900">{startRow}</span> a{' '}
-              <span className="font-semibold text-slate-900">{endRow}</span> de{' '}
-              <span className="font-semibold text-slate-900 font-mono">{totalFiltrados}</span> registros
-            </span>
+            {appConfig.pagination?.showTotalCount !== false && (
+              <span>
+                Mostrando <span className="font-semibold text-slate-900">{startRow}</span> a{' '}
+                <span className="font-semibold text-slate-900">{endRow}</span> de{' '}
+                <span className="font-semibold text-slate-900 font-mono">{totalFiltrados}</span> registros
+              </span>
+            )}
 
             {/* Selector de Filas por Página */}
-            <div className="flex items-center gap-1.5 pl-2 border-l border-slate-200">
-              <span className="text-slate-500">Filas:</span>
-              <select
-                value={table.getState().pagination.pageSize}
-                onChange={(e) => table.setPageSize(Number(e.target.value))}
-                className="bg-white border border-slate-300 rounded px-2 py-0.5 text-xs text-slate-700 font-medium focus:outline-none cursor-pointer"
-              >
-                {[5, 10, 25, 50].map((pageSize) => (
-                  <option key={pageSize} value={pageSize}>
-                    {pageSize}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {appConfig.pagination?.allowUserPageSize !== false && (
+              <div className="flex items-center gap-1.5 pl-2 border-l border-slate-200">
+                <span className="text-slate-500">Filas:</span>
+                <select
+                  value={table.getState().pagination.pageSize}
+                  onChange={(e) => table.setPageSize(Number(e.target.value))}
+                  className="bg-white border border-slate-300 rounded px-2 py-0.5 text-xs text-slate-700 font-medium focus:outline-none cursor-pointer"
+                >
+                  {(appConfig.pagination?.pageSizes || [5, 10, 25, 50]).map((pageSize) => (
+                    <option key={pageSize} value={pageSize}>
+                      {pageSize}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Botones de Navegación de Página */}
@@ -217,7 +229,7 @@ export default function DataTable({
               ← Anterior
             </button>
 
-            <span className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg font-mono text-slate-800 font-semibold shadow-xs">
+            <span className="px-3 py-1.5 theme-btn-primary rounded-lg font-mono font-semibold shadow-xs">
               {table.getState().pagination.pageIndex + 1} / {table.getPageCount() || 1}
             </span>
 

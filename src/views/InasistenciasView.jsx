@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import DataTable from '../components/DataTables';
 import { InasistenciasService } from '../services/api';
-import { appConfig, getCardRadiusClass } from '../config/appConfig';
+import { appConfig, getCardRadiusClass, getCardShadowClass, playFeedbackSound } from '../config/appConfig';
 
 /**
  * InasistenciasView - Pantalla 3: Control y justificación de ausencias
@@ -9,6 +9,7 @@ import { appConfig, getCardRadiusClass } from '../config/appConfig';
  */
 export default function InasistenciasView({ showToast }) {
   const cardRadius = getCardRadiusClass();
+  const cardShadow = getCardShadowClass();
   const [inasistencias, setInasistencias] = useState([
     {
       //mock de usuarios para realziar demo de como se veria el sistema
@@ -131,11 +132,22 @@ export default function InasistenciasView({ showToast }) {
       // Backend offline
     }
 
+    playFeedbackSound('success');
+
     if (showToast) {
       showToast('Falta Justificada', `Se asentó la justificación para ${selectedItem.nombre}.`, 'success');
     }
 
     handleCloseModal();
+  };
+
+  // Enmascarador de teléfono según configuración de privacidad en appConfig.security
+  const formatPhoneNumber = (phone) => {
+    if (!phone) return 'No especificado';
+    if (!appConfig.security?.maskTutorPhone) return phone;
+    if (phone.length < 4) return '••-••••-••••';
+    const last4 = phone.slice(-4);
+    return `••-••••-${last4}`;
   };
 
   // ==============================================================================
@@ -170,7 +182,7 @@ export default function InasistenciasView({ showToast }) {
     {
       accessorKey: 'tutorTelefono',
       header: 'Contacto Tutor',
-      cell: (info) => <span className="font-mono text-slate-600">{info.getValue()}</span>,
+      cell: (info) => <span className="font-mono text-slate-600">{formatPhoneNumber(info.getValue())}</span>,
     },
     {
       accessorKey: 'estado',
@@ -266,7 +278,7 @@ export default function InasistenciasView({ showToast }) {
       {/* Modal de Justificación con Doble Confirmación */}
       {selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className={`bg-white border border-slate-200 ${cardRadius} w-full max-w-md p-6 shadow-xl space-y-4`}>
+          <div className={`bg-white border border-slate-200 ${cardRadius} w-full max-w-md p-6 ${cardShadow} space-y-4`}>
             
             {/* VISTA 1: FORMULARIO INICIAL */}
             {!isConfirmingJustification ? (

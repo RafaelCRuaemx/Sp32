@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BitacoraService } from '../services/api';
 // [NUEVO] Componente reutilizable DataTable potenciado por TanStack Table (ordenamiento, busqueda y CSV)
 import DataTable from '../components/DataTables';
-import { appConfig } from '../config/appConfig';
+import { appConfig, playFeedbackSound } from '../config/appConfig';
 
 /**
  * BitacoraView - Pantalla 2: Historial en tiempo real de accesos RFID
@@ -83,6 +83,8 @@ export default function BitacoraView({ showToast }) {
   const displayLogs =
     statusFilter === 'todos' ? logs : logs.filter((log) => log.estado === statusFilter);
 
+  const simularRef = useRef(null);
+
   const simularEscaneo = async () => {
     const nombresDemo = [
       { nombre: 'Gabriela Ortiz Luna', matricula: '202303102', uid: '1C:44:EE:88', estado: 'a_tiempo' },
@@ -105,6 +107,10 @@ export default function BitacoraView({ showToast }) {
 
     setLogs((prev) => [nuevoLog, ...prev]);
 
+    // Reproducir alerta sonora según configuración en appConfig.sounds
+    const soundType = nuevoLog.estado === 'a_tiempo' ? 'success' : nuevoLog.estado === 'retardo' ? 'warning' : 'error';
+    playFeedbackSound(soundType);
+
     // Intento de envío a Django API si está en línea
     try {
       await BitacoraService.simularLectura({ uid: nuevoLog.uid, puerta: nuevoLog.puerta }).catch(() => {});
@@ -117,6 +123,21 @@ export default function BitacoraView({ showToast }) {
       showToast('Acceso Registrado (ESP32)', `${nuevoLog.nombre} • ${nuevoLog.uid} [${nuevoLog.estado.toUpperCase()}]`, type);
     }
   };
+
+  useEffect(() => {
+    simularRef.current = simularEscaneo;
+  });
+
+  // Soporte de Modo Demo Automático (feria de proyectos / exposiciones)
+  const demoIntervalSeconds = appConfig.demoMode?.autoScanIntervalSeconds || 0;
+  useEffect(() => {
+    if (demoIntervalSeconds > 0) {
+      const interval = setInterval(() => {
+        if (simularRef.current) simularRef.current();
+      }, demoIntervalSeconds * 1000);
+      return () => clearInterval(interval);
+    }
+  }, [demoIntervalSeconds]);
 
   const getStatusBadge = (estado) => {
     switch (estado) {
@@ -199,7 +220,15 @@ export default function BitacoraView({ showToast }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Registro de Asistencia</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Registro de Asistencia</h1>
+            {demoIntervalSeconds > 0 && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 animate-pulse">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                DEMO ACTIVO ({demoIntervalSeconds}s)
+              </span>
+            )}
+          </div>
           <p className="text-sm text-slate-500">
             Registro en tiempo real de entradas y salidas de usuarios.
           </p>

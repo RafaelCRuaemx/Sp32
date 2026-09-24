@@ -8,7 +8,7 @@ import { appConfig, getCardRadiusClass, getCardShadowClass } from '../config/app
  */
 
 
-//mock de usuarios de como se veria el sistema demo 
+//mock de usuarios para realizar demo de como se veria el sistema 
 export default function DashboardView() {
   const [kpis] = useState({
     totalPadron: 250,
@@ -177,10 +177,12 @@ export default function DashboardView() {
                   <span className="text-slate-500 font-medium">IP Asignada:</span>
                   <span className="font-mono theme-text-primary font-semibold">{appConfig.hardware.ip}</span>
                 </div>
-                <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
-                  <span className="text-slate-500 font-medium">Señal WiFi:</span>
-                  <span className="font-mono text-emerald-700 font-semibold">-58 dBm (Excelente)</span>
-                </div>
+                {appConfig.telemetry?.showWifiSignal !== false && (
+                  <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                    <span className="text-slate-500 font-medium">Señal WiFi:</span>
+                    <span className="font-mono text-emerald-700 font-semibold">-58 dBm (Excelente)</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
                   <span className="text-slate-500 font-medium">Protocolo:</span>
                   <span className="font-mono text-slate-800">HTTP REST / JSON</span>

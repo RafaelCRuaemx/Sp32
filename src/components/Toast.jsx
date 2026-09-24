@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { appConfig } from '../config/appConfig';
 
 /**
  * Toast - Componente de notificación flotante no invasivo
@@ -7,9 +8,10 @@ import React, { useEffect } from 'react';
 export default function Toast({ toast, onClose }) {
   useEffect(() => {
     if (toast?.show) {
+      const duration = appConfig.security?.toastDurationMs || 3500;
       const timer = setTimeout(() => {
         onClose();
-      }, 3500);
+      }, duration);
       return () => clearTimeout(timer);
     }
   }, [toast, onClose]);

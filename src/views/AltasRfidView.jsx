@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { UsuariosRfidService } from '../services/api';
 import DataTable from '../components/DataTables';
-import { appConfig } from '../config/appConfig';
+import { appConfig, getCardRadiusClass, getCardShadowClass, playFeedbackSound } from '../config/appConfig';
 
 /**
  * AltasRfidView - Pantalla 4: Gestión Integral de Usuarios y Padrón Escolar
  * Integrado con DataTable (TanStack Table) y doble verificación en altas, edición y bajas.
  */
 export default function AltasRfidView({ showToast }) {
+  const cardRadius = getCardRadiusClass();
+  const cardShadow = getCardShadowClass();
   const [usuarios, setUsuarios] = useState([
     //mock de usuarios apra realizar demo de como se veria el sistema
     {
@@ -155,8 +157,10 @@ export default function AltasRfidView({ showToast }) {
     // Si ya existe un UID previo, pedir confirmación antes de sobrescribir
     if (formData.uidRfid && formData.uidRfid.trim() !== '') {
       setPendingUidOverwrite(hex);
+      playFeedbackSound('warning');
     } else {
       setFormData((prev) => ({ ...prev, uidRfid: hex }));
+      playFeedbackSound('success');
       if (showToast) {
         showToast('Lectura ESP32 Detectada', `Tag RFID capturado: ${hex}`, 'info');
       }
@@ -243,6 +247,7 @@ export default function AltasRfidView({ showToast }) {
     if (!userToDelete) return;
 
     setUsuarios((prev) => prev.filter((u) => u.id !== userToDelete.id));
+    playFeedbackSound('warning');
 
     try {
       await UsuariosRfidService.eliminarUsuario(userToDelete.id).catch(() => {});
@@ -268,6 +273,15 @@ export default function AltasRfidView({ showToast }) {
       default:
         return 'bg-zinc-100 text-zinc-700 border-zinc-200';
     }
+  };
+
+  // Enmascarador de teléfono según configuración de privacidad en appConfig.security
+  const formatPhoneNumber = (phone) => {
+    if (!phone) return 'No especificado';
+    if (!appConfig.security?.maskTutorPhone) return phone;
+    if (phone.length < 4) return '••-••••-••••';
+    const last4 = phone.slice(-4);
+    return `••-••••-${last4}`;
   };
 
   // Filtrado de usuarios por Rol (Todos, Estudiante, Docente, etc.)
@@ -311,7 +325,7 @@ export default function AltasRfidView({ showToast }) {
       cell: (info) => (
         <div className="font-mono text-[11px]">
           <p className="text-slate-700">{info.getValue()}</p>
-          <p className="text-slate-400">{info.row.original.telefono}</p>
+          <p className="text-slate-400">{formatPhoneNumber(info.row.original.telefono)}</p>
         </div>
       ),
     },
@@ -394,23 +408,23 @@ export default function AltasRfidView({ showToast }) {
 
       {/* Métricas Rápidas */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs">
+        <div className={`bg-white border border-slate-200 ${cardRadius} p-3.5 ${cardShadow}`}>
           <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider block">Total Usuarios</span>
           <span className="text-2xl font-bold text-slate-900 font-mono mt-0.5 block">{usuarios.length}</span>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs">
+        <div className={`bg-white border border-slate-200 ${cardRadius} p-3.5 ${cardShadow}`}>
           <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider block">Estudiantes</span>
-          <span className="text-2xl font-bold text-indigo-600 font-mono mt-0.5 block">
+          <span className="text-2xl font-bold theme-text-primary font-mono mt-0.5 block">
             {usuarios.filter((u) => u.rol === 'Estudiante').length}
           </span>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs">
+        <div className={`bg-white border border-slate-200 ${cardRadius} p-3.5 ${cardShadow}`}>
           <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider block">Docentes</span>
           <span className="text-2xl font-bold text-purple-600 font-mono mt-0.5 block">
             {usuarios.filter((u) => u.rol === 'Docente').length}
           </span>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs">
+        <div className={`bg-white border border-slate-200 ${cardRadius} p-3.5 ${cardShadow}`}>
           <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider block">RFID Asignadas</span>
           <span className="text-2xl font-bold text-emerald-600 font-mono mt-0.5 block">{usuarios.length}</span>
         </div>
@@ -556,18 +570,36 @@ export default function AltasRfidView({ showToast }) {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Carrera / Área Académica</label>
-                    <select
-                      name="area"
-                      value={formData.area}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800"
-                    >
-                      {appConfig.academic.areas.map((a) => (
-                        <option key={a} value={a}>{a}</option>
-                      ))}
-                    </select>
+                  <div className={formData.rol === 'Estudiante' && appConfig.academic?.groups?.length > 0 ? 'grid grid-cols-1 sm:grid-cols-2 gap-3' : ''}>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Carrera / Área Académica</label>
+                      <select
+                        name="area"
+                        value={formData.area}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800"
+                      >
+                        {appConfig.academic.areas.map((a) => (
+                          <option key={a} value={a}>{a}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {formData.rol === 'Estudiante' && appConfig.academic?.groups?.length > 0 && (
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">Grupo Asignado</label>
+                        <select
+                          name="grupo"
+                          value={formData.grupo || appConfig.academic.groups[0]}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800"
+                        >
+                          {appConfig.academic.groups.map((g) => (
+                            <option key={g} value={g}>{g}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
 
                   {/* Campo UID con botón ESP32 */}
