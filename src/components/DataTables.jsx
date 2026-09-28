@@ -105,7 +105,7 @@ export default function DataTable({
   return (
     <div className="space-y-4">
       {/* Barra de herramientas con búsqueda y exportación */}
-      <div className={`flex flex-col md:flex-row gap-3 justify-between items-center bg-white border border-slate-200/90 ${cardRadius} p-3.5 shadow-xs`}>
+      <div className={`flex flex-col md:flex-row gap-3 justify-between items-center theme-card border ${cardRadius} p-3.5 shadow-xs`}>
         <div className="relative w-full md:w-80">
           <input
             type="text"
@@ -136,7 +136,7 @@ export default function DataTable({
       </div>
 
       {/* Contenedor de la Tabla */}
-      <div className={`bg-white border border-slate-200/90 ${cardRadius} overflow-hidden ${cardShadow}`}>
+      <div className={`theme-card border ${cardRadius} overflow-hidden ${cardShadow}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-700">
             <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 font-mono select-none">

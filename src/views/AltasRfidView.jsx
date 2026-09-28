@@ -408,23 +408,23 @@ export default function AltasRfidView({ showToast }) {
 
       {/* Métricas Rápidas */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className={`bg-white border border-slate-200 ${cardRadius} p-3.5 ${cardShadow}`}>
+        <div className={`theme-card border ${cardRadius} p-3.5 ${cardShadow}`}>
           <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider block">Total Usuarios</span>
           <span className="text-2xl font-bold text-slate-900 font-mono mt-0.5 block">{usuarios.length}</span>
         </div>
-        <div className={`bg-white border border-slate-200 ${cardRadius} p-3.5 ${cardShadow}`}>
+        <div className={`theme-card border ${cardRadius} p-3.5 ${cardShadow}`}>
           <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider block">Estudiantes</span>
           <span className="text-2xl font-bold theme-text-primary font-mono mt-0.5 block">
             {usuarios.filter((u) => u.rol === 'Estudiante').length}
           </span>
         </div>
-        <div className={`bg-white border border-slate-200 ${cardRadius} p-3.5 ${cardShadow}`}>
+        <div className={`theme-card border ${cardRadius} p-3.5 ${cardShadow}`}>
           <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider block">Docentes</span>
           <span className="text-2xl font-bold text-purple-600 font-mono mt-0.5 block">
             {usuarios.filter((u) => u.rol === 'Docente').length}
           </span>
         </div>
-        <div className={`bg-white border border-slate-200 ${cardRadius} p-3.5 ${cardShadow}`}>
+        <div className={`theme-card border ${cardRadius} p-3.5 ${cardShadow}`}>
           <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider block">RFID Asignadas</span>
           <span className="text-2xl font-bold text-emerald-600 font-mono mt-0.5 block">{usuarios.length}</span>
         </div>

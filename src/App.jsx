@@ -5,8 +5,10 @@ import DashboardView from './views/DashboardView';
 import BitacoraView from './views/BitacoraView';
 import InasistenciasView from './views/InasistenciasView';
 import AltasRfidView from './views/AltasRfidView';
-import { appConfig, getActiveTheme, isSidebarLayout, isBottomNavLayout } from './config/appConfig';
+import { appConfig, getActiveTheme, getAppBackgroundColor, isSidebarLayout, isBottomNavLayout } from './config/appConfig';
 import './App.css';
+import LoginView from './views/LoginView';
+import { authService } from './services/authService';
 
 /**
  * App - Shell dinámico de la aplicación
@@ -25,10 +27,33 @@ function App() {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [toast, setToast] = useState({ show: false, title: '', message: '', type: 'success' });
 
+  // Control de sesión y 2FA (Google Authenticator)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => authService.isAuthenticated());
+  const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUser());
+
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+    setIsAuthenticated(true);
+    setToast({
+      show: true,
+      title: 'Acceso Autorizado',
+      message: `Bienvenido al sistema, ${user?.name || 'Administrador'}`,
+      type: 'success',
+    });
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+  };
+
   const activeTheme = getActiveTheme();
   const themePreset = appConfig.themePreset;
   const fontFamily = appConfig.fontFamily;
   const currentFontSize = appConfig.appearance?.fontSize || 'normal';
+  const backgroundMode = appConfig.appearance?.backgroundMode;
+  const cardStyleConfig = appConfig.layout?.cards?.style;
 
   // Inyección de variables CSS según el tema configurado en appConfig.js
   useEffect(() => {
@@ -40,6 +65,10 @@ function App() {
     root.style.setProperty('--color-accent', activeTheme.accent);
     root.style.setProperty('--color-accent-light', activeTheme.accentLight);
     root.style.setProperty('--color-badge-border', activeTheme.badgeBorder);
+
+    // Fondo general dinámico (slate, tinted, pure-white o hexadecimal)
+    const appBgColor = getAppBackgroundColor();
+    root.style.setProperty('--app-bg-color', appBgColor);
 
     // Tipografía dinámica
     let fontFamilyStyle = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -71,7 +100,28 @@ function App() {
 
     const cardRadiusMap = { none: '0px', rounded: '0.5rem', curved: '1rem' };
     root.style.setProperty('--card-radius', cardRadiusMap[appConfig.layout?.cards?.borderRadius] || '1rem');
-  }, [activeTheme, themePreset, fontFamily, currentFontSize]);
+
+    // Estilo y color de tarjetas según layout.cards.style
+    const cardStyle = String(cardStyleConfig || 'theme-border').toLowerCase().trim();
+    if (cardStyle === 'tinted') {
+      root.style.setProperty('--card-bg', activeTheme.accentLight || '#f8fafc');
+      root.style.setProperty('--card-border', activeTheme.badgeBorder || '#cbd5e1');
+      root.style.setProperty('--card-border-hover', activeTheme.primary);
+    } else if (cardStyle === 'glass') {
+      root.style.setProperty('--card-bg', 'rgba(255, 255, 255, 0.85)');
+      root.style.setProperty('--card-border', activeTheme.badgeBorder || '#cbd5e1');
+      root.style.setProperty('--card-border-hover', activeTheme.primary);
+    } else if (cardStyle === 'white') {
+      root.style.setProperty('--card-bg', '#ffffff');
+      root.style.setProperty('--card-border', '#e2e8f0');
+      root.style.setProperty('--card-border-hover', '#cbd5e1');
+    } else {
+      // 'theme-border' (por defecto recomendado)
+      root.style.setProperty('--card-bg', '#ffffff');
+      root.style.setProperty('--card-border', activeTheme.badgeBorder || '#cbd5e1');
+      root.style.setProperty('--card-border-hover', activeTheme.primary);
+    }
+  }, [activeTheme, themePreset, fontFamily, currentFontSize, backgroundMode, cardStyleConfig]);
 
   const showToast = (title, message, type = 'success') => {
     setToast({ show: true, title, message, type });
@@ -100,6 +150,27 @@ function App() {
   const isBottom = isBottomNavLayout();
   const isRightSidebar = isSidebar && appConfig.layout?.sidebar?.position === 'right';
 
+  // Si requireLogin está activo y el usuario no se ha autenticado con 2FA
+  if (!isAuthenticated && appConfig.security?.auth?.requireLogin) {
+    return (
+      <div
+        style={{
+          '--color-primary': activeTheme.primary,
+          '--color-primary-hover': activeTheme.primaryHover,
+          '--color-primary-text': activeTheme.primaryText,
+          '--color-accent': activeTheme.accent,
+          '--color-accent-light': activeTheme.accentLight,
+          '--color-badge-border': activeTheme.badgeBorder,
+          fontFamily: 'var(--font-family-base)',
+          backgroundColor: 'var(--app-bg-color, #f8fafc)',
+        }}
+      >
+        <LoginView onLoginSuccess={handleLoginSuccess} />
+        <Toast toast={toast} onClose={closeToast} />
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -110,8 +181,9 @@ function App() {
         '--color-accent-light': activeTheme.accentLight,
         '--color-badge-border': activeTheme.badgeBorder,
         fontFamily: 'var(--font-family-base)',
+        backgroundColor: 'var(--app-bg-color, #f8fafc)',
       }}
-      className={`min-h-screen bg-slate-50 text-slate-900 antialiased relative ${
+      className={`min-h-screen text-slate-900 antialiased relative ${
         isSidebar
           ? isRightSidebar
             ? 'flex flex-col md:flex md:flex-row-reverse'
@@ -151,7 +223,12 @@ function App() {
       )}
 
       {/* Navegación Adaptable (Topbar, Sidebar o Dock Inferior) */}
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Navbar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        user={currentUser}
+        onLogout={handleLogout}
+      />
 
       {/* Contenedor Principal (Flexible en Sidebar, Centrado en Topbar/Bottom) */}
       <div className={`flex-1 flex flex-col min-h-screen relative z-10 ${isSidebar ? 'overflow-x-hidden' : ''}`}>

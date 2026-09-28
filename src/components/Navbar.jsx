@@ -9,7 +9,7 @@ import { appConfig, isSidebarLayout, isBottomNavLayout, getSidebarClasses } from
  * @param {string} activeTab - Tab activo ('dashboard' | 'bitacora' | 'inasistencias' | 'altas')
  * @param {function} setActiveTab - Función selectora de tab
  */
-export default function Navbar({ activeTab, setActiveTab }) {
+export default function Navbar({ activeTab, setActiveTab, user = null, onLogout = null }) {
   // Reloj en tiempo real
   const [currentTime, setCurrentTime] = useState(new Date());
   // Estado para auto-expansión o auto-ocultamiento al pasar el cursor
@@ -226,6 +226,24 @@ export default function Navbar({ activeTab, setActiveTab }) {
 
               {/* Pie del cajón móvil */}
               <div className={`space-y-2.5 pt-4 border-t ${sidebarStyles.headerBorder} text-xs font-mono`}>
+                {user && onLogout && (
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-100/70 border border-slate-200">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-slate-800 text-xs">{user.name || 'Admin'}</span>
+                      <span className="text-[10px] text-emerald-600 font-medium">● 2FA Activo</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        onLogout();
+                      }}
+                      className="px-2.5 py-1 rounded-lg text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 cursor-pointer"
+                    >
+                      Salir
+                    </button>
+                  </div>
+                )}
                 <div className={`p-2.5 rounded-xl border flex items-center justify-between ${sidebarStyles.footerCard}`}>
                   <span>{horaLocal}</span>
                   <span className="text-[11px] opacity-75 capitalize">{fechaLocal}</span>
@@ -363,6 +381,33 @@ export default function Navbar({ activeTab, setActiveTab }) {
                 )}
               </div>
             )}
+
+            {user && onLogout && (
+              <div className={`p-2 rounded-xl border flex items-center ${
+                showExpandedContent ? 'justify-between' : 'justify-center'
+              } ${
+                sidebarStyles.isDarkOrBrand
+                  ? 'bg-white/5 border-white/10 text-white'
+                  : 'bg-slate-50 border-slate-200 text-slate-800'
+              }`}>
+                {showExpandedContent && (
+                  <div className="flex flex-col truncate">
+                    <span className="text-xs font-bold truncate">{user.name || 'Admin'}</span>
+                    <span className="text-[10px] text-emerald-500 font-medium">● 2FA Activo</span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  title="Cerrar sesión"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         </aside>
       </>
@@ -481,6 +526,29 @@ export default function Navbar({ activeTab, setActiveTab }) {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
                 <span>{appConfig.hardware.label}: {appConfig.hardware.ip}</span>
+              </div>
+            )}
+
+            {user && onLogout && (
+              <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+                <div className="hidden xl:flex flex-col text-right">
+                  <span className="text-xs font-bold text-slate-800 leading-tight truncate max-w-[130px]">
+                    {user.name || 'Admin'}
+                  </span>
+                  <span className="text-[10px] text-emerald-600 font-medium flex items-center justify-end gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 2FA Activo
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  title="Cerrar sesión"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 transition-all cursor-pointer"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </button>
               </div>
             )}
           </div>

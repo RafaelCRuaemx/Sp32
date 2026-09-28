@@ -93,12 +93,17 @@ export const appConfig = {
       actionButtonPosition: 'header',
     },
 
-    // Estilo de bordes de las tarjetas, modales y tablas:
-    // 'none'    -> Bordes rectos y cuadrados (estilo técnico)
-    // 'rounded' -> Redondeo suave estándar (rounded-lg)
-    // 'curved'  -> Curvas modernas pronunciadas (rounded-2xl)
+    // Estilo de bordes y apariencia de las tarjetas, modales y tablas:
+    // borderRadius: 'none' (recto) | 'rounded' (suave) | 'curved' (pronunciado)
     cards: {
       borderRadius: 'rounded',
+      
+      // ESTILO Y COLOR DE LAS TARJETAS:
+      // 'theme-border' -> (Recomendado) Interior blanco puro con borde iluminado al color del tema
+      // 'white'        -> Clásico blanco con bordes neutros de pizarra (slate)
+      // 'tinted'       -> Fondo suavemente entintado con el tono tenue del tema
+      // 'glass'        -> Efecto moderno de cristal translúcido con desenfoque de fondo
+      style: 'tinted',
     },
   },
 
@@ -239,6 +244,13 @@ export const appConfig = {
     maskTutorPhone: false,           // Si es true, oculta el teléfono en pantalla (ej: 55-****-5678)
     allowExportCsv: true,            // ¿Permitir a los usuarios descargar reportes CSV?
     toastDurationMs: 3500,           // Duración en pantalla de las notificaciones toast (ms)
+    // Configuración de Acceso y 2FA (Google Authenticator)
+    auth: {
+      requireLogin: true,            // Cambia a true para activar la pantalla de login, o false para bypass
+      enable2FA: true,               // ¿Solicitar los 6 dígitos de Google Authenticator?
+      mockMode: true,                // true = modo prueba en navegador; false = conecta con Django
+      issuerName: 'Control Escolar RFID',
+    },
   },
 
   // ================================================================================
@@ -287,19 +299,27 @@ export const appConfig = {
     fontSize: 'normal',              // 'compact' (14px) | 'normal' (15px) | 'large' (17px)
     tableDensity: 'normal',          // 'compact' (ajustado) | 'normal' (estándar) | 'relaxed' (amplio)
     cardShadow: 'soft',              // 'none' (plano) | 'soft' (suave) | 'elevated' (flotante)
+
+    // COLOR O MODO DE FONDO GENERAL DE LA APLICACIÓN:
+    // 'slate'      -> Fondo gris suave ejecutivo (#f8fafc) [Estándar recomendado para contraste]
+    // 'tinted'     -> Fondo suavemente entintado con el color del tema activo (ej: lila tenue si es morado)
+    // 'pure-white' -> Fondo blanco puro (#ffffff)
+    // 'zinc'       -> Fondo gris neutro cálido (#f4f4f5)
+    // '#f4f6f9'    -> O cualquier código hexadecimal específico de tu colegio
+    backgroundMode: 'tinted',
   },
 
   // ================================================================================
   // 17. TIPOGRAFÍA Y FUENTES
   // Opciones: 'sans' (moderna/limpia), 'serif' (formal/clásica), 'mono' (técnica)
   // ================================================================================
-  fontFamily: 'serif',
+  fontFamily: 'sans',
 
   // ================================================================================
   // 18. TEMA VISUAL Y PALETA DE COLORES
   // Opciones: 'azul' | 'guinda' | 'verde' | 'morado' | 'slate' | 'personalizado'
   // ================================================================================
-  themePreset: 'slate',
+  themePreset: 'guinda',
 
   presets: {
     // Preset para colores personalizados del manual de identidad de tu escuela:
@@ -486,6 +506,25 @@ export function getCardRadiusClass() {
 }
 
 /**
+ * Obtiene las clases de fondo y borde para las tarjetas según layout.cards.style
+ */
+export function getCardThemeClasses() {
+  const style = String(appConfig.layout?.cards?.style || 'theme-border').toLowerCase().trim();
+
+  switch (style) {
+    case 'tinted':
+      return 'bg-[var(--color-accent-light,#f8fafc)] border border-[var(--color-badge-border,#cbd5e1)]';
+    case 'glass':
+      return 'bg-white/85 backdrop-blur-md border border-[var(--color-badge-border,#cbd5e1)] shadow-xs';
+    case 'white':
+      return 'bg-white border border-slate-200/90 hover:border-slate-300 transition-colors';
+    case 'theme-border':
+    default:
+      return 'bg-white border border-[var(--color-badge-border,#cbd5e1)] hover:border-[var(--color-primary)] transition-colors';
+  }
+}
+
+/**
  * Obtiene la clase de redondeo para botones
  */
 export function getButtonRadiusClass() {
@@ -636,4 +675,29 @@ export function playFeedbackSound(type = 'success') {
   } catch {
     // Si el navegador bloquea audio sin interacción de usuario, ignorar silenciosamente
   }
+}
+
+/**
+ * Obtiene el color de fondo general de la aplicación según backgroundMode
+ */
+export function getAppBackgroundColor() {
+  const mode = String(appConfig.appearance?.backgroundMode || 'slate').trim();
+  const activeTheme = getActiveTheme();
+
+  if (mode === 'tinted') {
+    return activeTheme.accentLight || '#f8fafc';
+  }
+  if (mode === 'pure-white' || mode === 'white') {
+    return '#ffffff';
+  }
+  if (mode === 'zinc') {
+    return '#f4f4f5';
+  }
+  if (mode === 'slate' || mode === 'default') {
+    return '#f8fafc';
+  }
+  if (mode.startsWith('#') || mode.startsWith('rgb')) {
+    return mode;
+  }
+  return '#f8fafc';
 }
