@@ -140,37 +140,51 @@ export default function BitacoraView({ showToast }) {
   }, [demoIntervalSeconds]);
 
   const getStatusBadge = (estado) => {
-    switch (estado) {
-      case 'a_tiempo':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            A tiempo
-          </span>
-        );
-      case 'retardo':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-amber-50 text-amber-700 border border-amber-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-            Retardo
-          </span>
-        );
-      case 'denegado':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-rose-50 text-rose-700 border border-rose-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-            Denegado
-          </span>
-        );
-      default:
-        return null;
-    }
+    const config = appConfig.statusLabels?.[estado] || {
+      label: estado === 'a_tiempo' ? 'A tiempo' : estado === 'retardo' ? 'Retardo' : 'Denegado',
+      color: estado === 'a_tiempo' ? 'emerald' : estado === 'retardo' ? 'amber' : 'rose',
+    };
+
+    const colorMap = {
+      emerald: {
+        bg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        dot: 'bg-emerald-500',
+      },
+      amber: {
+        bg: 'bg-amber-50 text-amber-700 border-amber-200',
+        dot: 'bg-amber-500',
+      },
+      rose: {
+        bg: 'bg-rose-50 text-rose-700 border-rose-200',
+        dot: 'bg-rose-500',
+      },
+      red: {
+        bg: 'bg-red-50 text-red-700 border-red-200',
+        dot: 'bg-red-500',
+      },
+      blue: {
+        bg: 'bg-blue-50 text-blue-700 border-blue-200',
+        dot: 'bg-blue-500',
+      },
+    };
+
+    const colorStyle = colorMap[config.color] || colorMap.emerald;
+
+    return (
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium border ${colorStyle.bg}`}>
+        <span className={`w-1.5 h-1.5 rounded-full ${colorStyle.dot}`}></span>
+        {config.label}
+      </span>
+    );
   };
 
   // ==============================================================================
-  // [NUEVO] DEFINICIÓN DE COLUMNAS PARA TANSTACK TABLE (DATATABLES)
-  // Cada columna define su identificador (accessorKey), título (header) y contenido (cell)
+  // DEFINICIÓN DE COLUMNAS PARA TANSTACK TABLE (DATATABLES)
+  // Controlable desde appConfig.tablesDisplay.bitacora (showUidColumn, showDoorColumn)
   // ==============================================================================
+  const showUid = appConfig.tablesDisplay?.bitacora?.showUidColumn !== false;
+  const showDoor = appConfig.tablesDisplay?.bitacora?.showDoorColumn !== false;
+
   const columns = [
     {
       accessorKey: 'nombre',
@@ -189,31 +203,48 @@ export default function BitacoraView({ showToast }) {
       header: 'Matrícula',
       cell: (info) => <span className="font-mono text-slate-600">{info.getValue()}</span>,
     },
-    {
-      accessorKey: 'uid',
-      header: 'UID RFID',
-      cell: (info) => (
-        <span className="font-mono text-xs px-2.5 py-1 bg-slate-100 text-indigo-900 border border-slate-200 rounded font-semibold">
-          {info.getValue()}
-        </span>
-      ),
-    },
+    ...(showUid
+      ? [
+          {
+            accessorKey: 'uid',
+            header: 'UID RFID',
+            cell: (info) => (
+              <span className="font-mono text-xs px-2.5 py-1 bg-slate-100 text-indigo-900 border border-slate-200 rounded font-semibold">
+                {info.getValue()}
+              </span>
+            ),
+          },
+        ]
+      : []),
     {
       accessorKey: 'hora',
       header: 'Fecha y Hora',
       cell: (info) => <span className="font-mono text-slate-500">{info.getValue()}</span>,
     },
-    {
-      accessorKey: 'puerta',
-      header: 'Punto Acceso',
-      cell: (info) => <span className="text-slate-600">{info.getValue()}</span>,
-    },
+    ...(showDoor
+      ? [
+          {
+            accessorKey: 'puerta',
+            header: 'Punto Acceso',
+            cell: (info) => <span className="text-slate-600">{info.getValue()}</span>,
+          },
+        ]
+      : []),
     {
       accessorKey: 'estado',
       header: 'Estado',
       cell: (info) => getStatusBadge(info.getValue()),
     },
   ];
+
+  // Filtros rápidos configurables desde appConfig.quickFilters.bitacora
+  const filterList = appConfig.quickFilters?.bitacora || ['todos', 'a_tiempo', 'retardo', 'denegado'];
+  const filterLabels = {
+    todos: 'Todos',
+    a_tiempo: appConfig.statusLabels?.a_tiempo?.label || 'A Tiempo',
+    retardo: appConfig.statusLabels?.retardo?.label || 'Retardo',
+    denegado: appConfig.statusLabels?.denegado?.label || 'Denegado',
+  };
 
   return (
     <div className="space-y-5">
@@ -261,22 +292,17 @@ export default function BitacoraView({ showToast }) {
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1 overflow-x-auto">
               <span className="text-xs font-medium text-slate-500 mr-1">Estado:</span>
-              {[
-                { id: 'todos', label: 'Todos' },
-                { id: 'a_tiempo', label: 'A Tiempo' },
-                { id: 'retardo', label: 'Retardo' },
-                { id: 'denegado', label: 'Denegado' },
-              ].map((tab) => (
+              {filterList.map((filterId) => (
                 <button
-                  key={tab.id}
-                  onClick={() => setStatusFilter(tab.id)}
+                  key={filterId}
+                  onClick={() => setStatusFilter(filterId)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
-                    statusFilter === tab.id
+                    statusFilter === filterId
                       ? 'theme-btn-primary shadow-xs'
                       : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  {tab.label}
+                  {filterLabels[filterId] || filterId}
                 </button>
               ))}
             </div>

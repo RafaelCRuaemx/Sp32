@@ -100,7 +100,7 @@ export default function AltasRfidView({ showToast }) {
     matricula: '',
     correo: '',
     telefono: '',
-    rol: appConfig.academic.roles[0] || 'Estudiante',
+    rol: appConfig.userRegistration?.defaultRole || appConfig.academic.roles[0] || 'Estudiante',
     area: appConfig.academic.areas[0] || '',
     uidRfid: '',
   };
@@ -139,9 +139,13 @@ export default function AltasRfidView({ showToast }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let finalVal = value;
+    if (name === 'nombre' && appConfig.userRegistration?.autoUppercaseName) {
+      finalVal = value.toUpperCase();
+    }
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: finalVal,
     }));
   };
 
@@ -183,6 +187,18 @@ export default function AltasRfidView({ showToast }) {
     if (!formData.nombre.trim() || !formData.matricula.trim() || !formData.uidRfid.trim()) {
       if (showToast) {
         showToast('Campos Incompletos', 'Completa el nombre, matrícula y UID de la tarjeta.', 'error');
+      }
+      return;
+    }
+    if (appConfig.userRegistration?.requireEmail && !formData.correo.trim()) {
+      if (showToast) {
+        showToast('Correo Obligatorio', 'El correo institucional es requerido por configuración del plantel.', 'error');
+      }
+      return;
+    }
+    if (appConfig.userRegistration?.requirePhone && !formData.telefono.trim()) {
+      if (showToast) {
+        showToast('Teléfono Obligatorio', 'El teléfono de contacto es requerido por configuración del plantel.', 'error');
       }
       return;
     }
@@ -288,6 +304,11 @@ export default function AltasRfidView({ showToast }) {
   const displayUsuarios =
     rolFilter === 'todos' ? usuarios : usuarios.filter((u) => u.rol === rolFilter);
 
+  // Configuración de visibilidad de columnas (appConfig.tablesDisplay.altas)
+  const showPhone = appConfig.tablesDisplay?.altas?.showPhoneColumn !== false;
+  const showEmail = appConfig.tablesDisplay?.altas?.showEmailColumn !== false;
+  const showDate = appConfig.tablesDisplay?.altas?.showDateColumn !== false;
+
   // ==============================================================================
   // DEFINICIÓN DE COLUMNAS PARA TANSTACK TABLE (DATATABLES)
   // ==============================================================================
@@ -319,16 +340,20 @@ export default function AltasRfidView({ showToast }) {
         </div>
       ),
     },
-    {
-      accessorKey: 'correo',
-      header: 'Contacto',
-      cell: (info) => (
-        <div className="font-mono text-[11px]">
-          <p className="text-slate-700">{info.getValue()}</p>
-          <p className="text-slate-400">{formatPhoneNumber(info.row.original.telefono)}</p>
-        </div>
-      ),
-    },
+    ...((showEmail || showPhone)
+      ? [
+          {
+            accessorKey: 'correo',
+            header: 'Contacto',
+            cell: (info) => (
+              <div className="font-mono text-[11px]">
+                {showEmail && <p className="text-slate-700">{info.getValue()}</p>}
+                {showPhone && <p className="text-slate-400">{formatPhoneNumber(info.row.original.telefono)}</p>}
+              </div>
+            ),
+          },
+        ]
+      : []),
     {
       accessorKey: 'uidRfid',
       header: 'Credencial RFID (ESP32)',
@@ -337,7 +362,9 @@ export default function AltasRfidView({ showToast }) {
           <span className="font-mono text-xs px-2.5 py-1 bg-slate-100 text-indigo-900 border border-slate-200 rounded font-semibold">
             {info.getValue()}
           </span>
-          <span className="text-[10px] text-slate-400 block font-mono mt-1">Alta: {info.row.original.fechaAlta}</span>
+          {showDate && (
+            <span className="text-[10px] text-slate-400 block font-mono mt-1">Alta: {info.row.original.fechaAlta}</span>
+          )}
         </div>
       ),
     },
@@ -440,7 +467,7 @@ export default function AltasRfidView({ showToast }) {
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1.5 overflow-x-auto">
               <span className="text-xs font-medium text-slate-500 mr-1">Filtrar:</span>
-              {['todos', ...appConfig.academic.roles].map((rol) => (
+              {(appConfig.quickFilters?.altas || ['todos', ...appConfig.academic.roles]).map((rol) => (
                 <button
                   key={rol}
                   onClick={() => setRolFilter(rol)}

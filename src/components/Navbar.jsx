@@ -14,6 +14,8 @@ export default function Navbar({ activeTab, setActiveTab, user = null, onLogout 
   const [currentTime, setCurrentTime] = useState(new Date());
   // Estado para auto-expansión o auto-ocultamiento al pasar el cursor
   const [isHovered, setIsHovered] = useState(false);
+  // Estado para el menú desplegable en dispositivos móviles
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {

@@ -17,8 +17,7 @@ export const appConfig = {
     subtitle: 'Control de Accesos mediante tarjetas RFID y ESP32',
     logoUrl: null,                            // Ruta de imagen de logo (ej. '/logo.png'). Si es null usa texto
     responsable: 'Ing. Coordinador de Proyecto', // Nombre del encargado / director
-    cct: 'CCT: 15DIT0042K',                   // Clave de Centro de Trabajo (opcional para reportes)
-    copyright: '© 2026 Sistema de Asistencia RFID • Todos los derechos reservados',
+    copyright: '© 2026 Sistema de Asistencia RFID • Todos los derechos reservados',         
   },
 
   // ================================================================================
@@ -30,7 +29,7 @@ export const appConfig = {
     // 'top'                  -> Barra horizontal superior clásica
     // 'sidebar' o 'slidebar' -> Menú vertical lateral estilo Dashboard (izquierda o derecha)
     // 'bottom' o 'dock'      -> Barra flotante inferior estilo Dock de macOS / Móvil
-    navigationStyle: 'top',
+    navigationStyle: 'slidebar',
 
     // ¿Qué pantalla quieres que se abra por defecto al entrar al sistema?
     // Opciones: 'dashboard' | 'bitacora' | 'inasistencias' | 'altas'
@@ -52,15 +51,15 @@ export const appConfig = {
       // 1. Posición en pantalla:
       // 'left'  -> Lado izquierdo tradicional
       // 'right' -> Lado derecho
-      position: 'left',
+      position: 'right',
 
       // 2. Comportamiento y auto-ocultamiento:
       // 'fixed'        -> Siempre visible en pantalla con su ancho completo
       // 'hover-expand' -> Mini-barra delgada de íconos que se expande completa al acercar el cursor
       // 'auto-hide'    -> Totalmente oculta en el borde; se desliza hacia afuera al acercar el cursor
-      behavior: 'fixed',
+      behavior: 'hover-expand',
 
-      theme: 'light',           // 'light' (blanco minimalista) | 'dark' (ejecutivo oscuro) | 'brand' (color del tema)
+      theme: 'brand',           // 'light' (blanco minimalista) | 'dark' (ejecutivo oscuro) | 'brand' (color del tema)
       width: 'normal',          // 'compact' (w-56) | 'normal' (w-64) | 'wide' (w-72)
       showLogo: true,           // ¿Mostrar ícono/logo de la escuela en la cabecera? (true / false)
     },
@@ -82,7 +81,7 @@ export const appConfig = {
       // Disposición de la gráfica y la tarjeta de hardware:
       // 'side-by-side' -> Lado a lado en columnas
       // 'stacked'      -> Uno debajo del otro a ancho completo
-      chartLayout: 'side-by-side',
+      chartLayout: 'stacked',
     },
 
     // POSICIÓN DE BOTONES EN LAS TABLAS:
@@ -142,7 +141,7 @@ export const appConfig = {
   modules: {
     dashboard: {
       enabled: true,
-      label: 'Estadisticcas',
+      label: 'Estadisticas',
     },
     bitacora: {
       enabled: true,
@@ -298,7 +297,7 @@ export const appConfig = {
   appearance: {
     fontSize: 'normal',              // 'compact' (14px) | 'normal' (15px) | 'large' (17px)
     tableDensity: 'normal',          // 'compact' (ajustado) | 'normal' (estándar) | 'relaxed' (amplio)
-    cardShadow: 'soft',              // 'none' (plano) | 'soft' (suave) | 'elevated' (flotante)
+    cardShadow: 'elevated',              // 'none' (plano) | 'soft' (suave) | 'elevated' (flotante)
 
     // COLOR O MODO DE FONDO GENERAL DE LA APLICACIÓN:
     // 'slate'      -> Fondo gris suave ejecutivo (#f8fafc) [Estándar recomendado para contraste]
@@ -311,15 +310,27 @@ export const appConfig = {
 
   // ================================================================================
   // 17. TIPOGRAFÍA Y FUENTES
-  // Opciones: 'sans' (moderna/limpia), 'serif' (formal/clásica), 'mono' (técnica)
+  // Opciones disponibles: 'outfit' | 'inter' | 'poppins' | 'jakarta' | 'roboto' | 'sans' | 'serif' | 'mono'
+  // Puedes cambiar fontFamily por cualquiera de las llaves definidas en fontPresets abajo:
   // ================================================================================
   fontFamily: 'sans',
+
+  fontPresets: {
+    outfit: "'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    inter: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    poppins: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    jakarta: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    roboto: "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif",
+    sans: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    serif: "Georgia, Cambria, 'Times New Roman', Times, serif",
+    mono: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+  },
 
   // ================================================================================
   // 18. TEMA VISUAL Y PALETA DE COLORES
   // Opciones: 'azul' | 'guinda' | 'verde' | 'morado' | 'slate' | 'personalizado'
   // ================================================================================
-  themePreset: 'guinda',
+  themePreset: 'slate',
 
   presets: {
     // Preset para colores personalizados del manual de identidad de tu escuela:
@@ -328,15 +339,15 @@ export const appConfig = {
       primaryHover: '#001c30',       // Color al pasar el cursor
       primaryText: '#ffffff',        // Color de texto sobre botón primario
       accent: '#D4AF37',             // Color de acento secundario (ej. Dorado)
-      accentLight: '#fdfbf7',        // Fondo tenue de acento
-      badgeBorder: '#f3e5ab',        // Borde de insignias
+      accentLight: '#fef3c7',        // Fondo armónico tenue de acento (Ámbar suave visible)
+      badgeBorder: '#fcd34d',        // Borde de insignias
     },
     slate: {
       primary: '#0f172a',
       primaryHover: '#1e293b',
       primaryText: '#ffffff',
       accent: '#334155',
-      accentLight: '#f1f5f9',
+      accentLight: '#e2e8f0',        // Fondo gris pizarra ejecutivo distinguible
       badgeBorder: '#cbd5e1',
     },
     azul: {
@@ -344,32 +355,32 @@ export const appConfig = {
       primaryHover: '#1e40af',
       primaryText: '#ffffff',
       accent: '#2563eb',
-      accentLight: '#eff6ff',
-      badgeBorder: '#bfdbfe',
+      accentLight: '#dbeafe',        // Fondo azul cielo suave distinguible
+      badgeBorder: '#93c5fd',
     },
     guinda: {
       primary: '#881337',
       primaryHover: '#700c2a',
       primaryText: '#ffffff',
       accent: '#9f1239',
-      accentLight: '#fff1f2',
-      badgeBorder: '#fecdd3',
+      accentLight: '#ffe4e6',        // Fondo vino/rosa tenue distinguible
+      badgeBorder: '#fda4af',
     },
     verde: {
       primary: '#047857',
       primaryHover: '#065f46',
       primaryText: '#ffffff',
       accent: '#059669',
-      accentLight: '#ecfdf5',
-      badgeBorder: '#a7f3d0',
+      accentLight: '#d1fae5',        // Fondo menta suave distinguible
+      badgeBorder: '#6ee7b7',
     },
     morado: {
       primary: '#6d28d9',
       primaryHover: '#5b21b6',
       primaryText: '#ffffff',
       accent: '#7c3aed',
-      accentLight: '#f5f3ff',
-      badgeBorder: '#ddd6fe',
+      accentLight: '#ede9fe',        // Fondo lavanda/lila suave distinguible
+      badgeBorder: '#c4b5fd',
     },
     // Alias y temas complementarios (inglés/español) para compatibilidad total
     purple: {
@@ -377,69 +388,135 @@ export const appConfig = {
       primaryHover: '#5b21b6',
       primaryText: '#ffffff',
       accent: '#7c3aed',
-      accentLight: '#f5f3ff',
-      badgeBorder: '#ddd6fe',
+      accentLight: '#ede9fe',
+      badgeBorder: '#c4b5fd',
     },
     indigo: {
       primary: '#1d4ed8',
       primaryHover: '#1e40af',
       primaryText: '#ffffff',
       accent: '#2563eb',
-      accentLight: '#eff6ff',
-      badgeBorder: '#bfdbfe',
+      accentLight: '#dbeafe',
+      badgeBorder: '#93c5fd',
     },
     emerald: {
       primary: '#047857',
       primaryHover: '#065f46',
       primaryText: '#ffffff',
       accent: '#059669',
-      accentLight: '#ecfdf5',
-      badgeBorder: '#a7f3d0',
+      accentLight: '#d1fae5',
+      badgeBorder: '#6ee7b7',
     },
     rose: {
       primary: '#881337',
       primaryHover: '#700c2a',
       primaryText: '#ffffff',
       accent: '#9f1239',
-      accentLight: '#fff1f2',
-      badgeBorder: '#fecdd3',
+      accentLight: '#ffe4e6',
+      badgeBorder: '#fda4af',
     },
     sky: {
       primary: '#0284c7',
       primaryHover: '#0369a1',
       primaryText: '#ffffff',
       accent: '#38bdf8',
-      accentLight: '#f0f9ff',
-      badgeBorder: '#bae6fd',
+      accentLight: '#e0f2fe',
+      badgeBorder: '#7dd3fc',
     },
     amber: {
       primary: '#d97706',
       primaryHover: '#b45309',
       primaryText: '#ffffff',
       accent: '#f59e0b',
-      accentLight: '#fffbeb',
-      badgeBorder: '#fde68a',
+      accentLight: '#fef3c7',
+      badgeBorder: '#fcd34d',
     },
     custom: {
       primary: '#002B49',
       primaryHover: '#001c30',
       primaryText: '#ffffff',
       accent: '#D4AF37',
-      accentLight: '#fdfbf7',
-      badgeBorder: '#f3e5ab',
+      accentLight: '#fef3c7',
+      badgeBorder: '#fcd34d',
     },
     gris: {
       primary: '#0f172a',
       primaryHover: '#1e293b',
       primaryText: '#ffffff',
       accent: '#334155',
-      accentLight: '#f1f5f9',
+      accentLight: '#e2e8f0',
       badgeBorder: '#cbd5e1',
     },
   },
 
   // ================================================================================
-  // 19. SOPORTE TÉCNICO Y CONTACTO EN PIE DE PÁGINA
+  // 19. ETIQUETAS Y BADGES DE ESTADOS DE ASISTENCIA
+  // Permite renombrar y cambiar el color de los estados en Bitácora y Dashboard
+  // Colores soportados: 'emerald' | 'amber' | 'rose' | 'red' | 'blue'
+  // ================================================================================
+  statusLabels: {
+    a_tiempo: { label: 'A tiempo', color: 'emerald' },
+    retardo:  { label: 'Retardo', color: 'amber' },
+    denegado: { label: 'Denegado', color: 'rose' },
+    falta:    { label: 'Inasistencia', color: 'red' },
+  },
+
+  // ================================================================================
+  // 20. VISIBILIDAD DE COLUMNAS EN TABLAS (MOSTRAR / OCULTAR DATOS TÉCNICOS)
+  // ================================================================================
+  tablesDisplay: {
+    bitacora: {
+      showUidColumn: true,       // ¿Mostrar la columna con el código hexadecimal UID RFID?
+      showDoorColumn: true,      // ¿Mostrar el punto de acceso / torniquete por el que entró?
+    },
+    altas: {
+      showPhoneColumn: true,     // ¿Mostrar la columna de teléfono del tutor?
+      showEmailColumn: true,     // ¿Mostrar la columna de correo institucional?
+      showDateColumn: true,      // ¿Mostrar la fecha de registro en la tarjeta?
+    },
+    inasistencias: {
+      showJustifyButton: true,   // ¿Permitir el botón de justificar a los usuarios?
+    },
+  },
+
+  // ================================================================================
+  // 21. REGLAS DEL FORMULARIO DE REGISTRO DE USUARIOS (ALTAS)
+  // ================================================================================
+  userRegistration: {
+    requireEmail: false,         // ¿El correo es obligatorio para guardar? (false = opcional)
+    requirePhone: true,          // ¿El teléfono es obligatorio para guardar?
+    defaultRole: 'Estudiante',   // Rol preseleccionado ('Estudiante', 'Docente', 'Administrativo')
+    autoUppercaseName: true,     // Convierte automáticamente el nombre a MAYÚSCULAS
+  },
+
+  // ================================================================================
+  // 22. TURNOS Y METAS DEL DASHBOARD
+  // ================================================================================
+  dashboardSchedule: {
+    activeShift: 'matutino',     // 'matutino' | 'vespertino'
+    targetAttendancePercentage: 85, // % mínimo esperado (bajo este nivel, el KPI avisa en ámbar/rojo)
+  },
+
+  // ================================================================================
+  // 23. BOTONES DE FILTRO RÁPIDO EN TABLAS
+  // Define qué botones aparecen arriba de cada tabla para filtrar registros con un solo clic
+  // ================================================================================
+  quickFilters: {
+    bitacora: ['todos', 'a_tiempo', 'retardo', 'denegado'],
+    altas: ['todos', 'Estudiante', 'Docente', 'Administrativo'],
+  },
+
+  // ================================================================================
+  // 24. REGLAS DEL FORMULARIO DE JUSTIFICACIÓN DE FALTAS
+  // ================================================================================
+  justificationsForm: {
+    requireFolio: true,          // ¿Exigir número de folio o receta médica?
+    requireObservations: false,  // ¿Exigir redactar notas u observaciones?
+    defaultReason: 'Incapacidad Médica IMSS / ISSSTE', // Razón preseleccionada
+  },
+
+  // ================================================================================
+  // 25. SOPORTE TÉCNICO Y CONTACTO EN PIE DE PÁGINA
   // ================================================================================
   support: {
     helpDeskPhone: 'Ext. 104 - Lab Cómputo',
@@ -681,23 +758,31 @@ export function playFeedbackSound(type = 'success') {
  * Obtiene el color de fondo general de la aplicación según backgroundMode
  */
 export function getAppBackgroundColor() {
-  const mode = String(appConfig.appearance?.backgroundMode || 'slate').trim();
+  const mode = String(appConfig.appearance?.backgroundMode || 'tinted').trim().toLowerCase();
   const activeTheme = getActiveTheme();
 
-  if (mode === 'tinted') {
-    return activeTheme.accentLight || '#f8fafc';
-  }
+  // Modo Blanco Absoluto
   if (mode === 'pure-white' || mode === 'white') {
     return '#ffffff';
   }
+  // Modo Gris Técnico Neutro
   if (mode === 'zinc') {
     return '#f4f4f5';
   }
-  if (mode === 'slate' || mode === 'default') {
-    return '#f8fafc';
+  // Modo Gris Ejecutivo
+  if (mode === 'slate' || mode === 'gris') {
+    return '#e2e8f0';
   }
+  // Código de color exacto (ej. '#e0f2fe' o 'rgb(240, 249, 255)')
   if (mode.startsWith('#') || mode.startsWith('rgb')) {
     return mode;
   }
-  return '#f8fafc';
+  // Modo Entintado Armónico ('tinted', 'theme', 'armonia') o si se escribió el nombre de un tema
+  if (mode === 'tinted' || mode === 'theme' || mode === 'armonico' || appConfig.presets?.[mode]) {
+    const targetTheme = appConfig.presets?.[mode] || activeTheme;
+    return targetTheme.accentLight || '#f1f5f9';
+  }
+
+  // Fallback seguro: tinte armónico del tema activo
+  return activeTheme.accentLight || '#f1f5f9';
 }

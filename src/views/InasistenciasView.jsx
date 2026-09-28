@@ -69,9 +69,10 @@ export default function InasistenciasView({ showToast }) {
     },
   ]);
 
+  const defaultReason = appConfig.justificationsForm?.defaultReason || appConfig.justifications[0] || 'Incapacidad Médica';
   const [filterEstado, setFilterEstado] = useState('todos');
   const [selectedItem, setSelectedItem] = useState(null);
-  const [motivo, setMotivo] = useState(appConfig.justifications[0] || 'Incapacidad Médica');
+  const [motivo, setMotivo] = useState(defaultReason);
   const [folio, setFolio] = useState('');
   const [observaciones, setObservaciones] = useState('');
 
@@ -86,7 +87,7 @@ export default function InasistenciasView({ showToast }) {
 
   const handleOpenJustificar = (item) => {
     setSelectedItem(item);
-    setMotivo(appConfig.justifications[0] || 'Incapacidad Médica');
+    setMotivo(defaultReason);
     setFolio('');
     setObservaciones('');
     setIsConfirmingJustification(false);
@@ -97,9 +98,21 @@ export default function InasistenciasView({ showToast }) {
     setIsConfirmingJustification(false);
   };
 
-  // Paso 1: Solicitar doble confirmación
+  // Paso 1: Solicitar doble confirmación con validación de folio y observaciones
   const handleRequestConfirmation = (e) => {
     e.preventDefault();
+    if (appConfig.justificationsForm?.requireFolio && !folio.trim()) {
+      if (showToast) {
+        showToast('Folio Requerido', 'Debes ingresar el número de folio o comprobante.', 'error');
+      }
+      return;
+    }
+    if (appConfig.justificationsForm?.requireObservations && !observaciones.trim()) {
+      if (showToast) {
+        showToast('Observaciones Requeridas', 'Debes redactar notas u observaciones de la justificación.', 'error');
+      }
+      return;
+    }
     setIsConfirmingJustification(true);
   };
 
@@ -209,23 +222,27 @@ export default function InasistenciasView({ showToast }) {
         );
       },
     },
-    {
-      id: 'acciones',
-      header: 'Acción',
-      cell: (info) => {
-        const item = info.row.original;
-        return item.estado === 'injustificada' ? (
-          <button
-            onClick={() => handleOpenJustificar(item)}
-            className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium shadow-xs transition-colors cursor-pointer"
-          >
-            Justificar
-          </button>
-        ) : (
-          <span className="text-xs font-medium text-emerald-600 font-mono">✓ Validado</span>
-        );
-      },
-    },
+    ...(appConfig.tablesDisplay?.inasistencias?.showJustifyButton !== false
+      ? [
+          {
+            id: 'acciones',
+            header: 'Acción',
+            cell: (info) => {
+              const item = info.row.original;
+              return item.estado === 'injustificada' ? (
+                <button
+                  onClick={() => handleOpenJustificar(item)}
+                  className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium shadow-xs transition-colors cursor-pointer"
+                >
+                  Justificar
+                </button>
+              ) : (
+                <span className="text-xs font-medium text-emerald-600 font-mono">✓ Validado</span>
+              );
+            },
+          },
+        ]
+      : []),
   ];
 
   return (

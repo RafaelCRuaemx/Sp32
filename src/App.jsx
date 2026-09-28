@@ -71,12 +71,13 @@ function App() {
     root.style.setProperty('--app-bg-color', appBgColor);
 
     // Tipografía dinámica
-    let fontFamilyStyle = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-    if (fontFamily === 'serif') {
-      fontFamilyStyle = 'Georgia, Cambria, "Times New Roman", Times, serif';
-    } else if (fontFamily === 'mono') {
-      fontFamilyStyle = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
-    }
+    const defaultFonts = {
+      sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      serif: 'Georgia, Cambria, "Times New Roman", Times, serif',
+      mono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+    };
+    const fontPresetsMap = { ...defaultFonts, ...(appConfig.fontPresets || {}) };
+    const fontFamilyStyle = fontPresetsMap[fontFamily] || defaultFonts.sans;
     root.style.setProperty('--font-family-base', fontFamilyStyle);
 
     // Escala de tamaño de fuente general (compact, normal, large)

@@ -20,22 +20,38 @@ export default function DashboardView() {
     porcentajeInasistencias: 5.2,
   });
 
-  const [hourlyFlow] = useState([
-    { hour: '06:30', count: 12, height: '18%' },
-    { hour: '07:00', count: 58, height: '65%' },
-    { hour: '07:15', count: 95, height: '100%' },
-    { hour: '07:30', count: 42, height: '48%' },
-    { hour: '07:45', count: 19, height: '24%' },
-    { hour: '08:00', count: 6, height: '10%' },
-    { hour: '08:30', count: 4, height: '6%' },
-  ]);
+  const isVespertino = appConfig.dashboardSchedule?.activeShift === 'vespertino';
+  const [hourlyFlow] = useState(
+    isVespertino
+      ? [
+          { hour: '13:30', count: 15, height: '22%' },
+          { hour: '14:00', count: 62, height: '70%' },
+          { hour: '14:15', count: 88, height: '100%' },
+          { hour: '14:30', count: 39, height: '44%' },
+          { hour: '14:45', count: 21, height: '26%' },
+          { hour: '15:00', count: 8, height: '12%' },
+          { hour: '15:30', count: 3, height: '5%' },
+        ]
+      : [
+          { hour: '06:30', count: 12, height: '18%' },
+          { hour: '07:00', count: 58, height: '65%' },
+          { hour: '07:15', count: 95, height: '100%' },
+          { hour: '07:30', count: 42, height: '48%' },
+          { hour: '07:45', count: 19, height: '24%' },
+          { hour: '08:00', count: 6, height: '10%' },
+          { hour: '08:30', count: 4, height: '6%' },
+        ]
+  );
 
   const [recentScans] = useState([
-    { id: 1, name: 'Valeria Morales Cruz', matricula: '202303001', uid: '9A:4B:C1:20', time: '07:44:12 AM', status: 'Retardo' },
-    { id: 2, name: 'Diego Fernando Ruiz', matricula: '202303014', uid: '3D:88:5A:F2', time: '07:29:50 AM', status: 'A tiempo' },
-    { id: 3, name: 'Sofia Elizabeth Lara', matricula: '202303088', uid: 'B1:05:44:E9', time: '07:28:10 AM', status: 'A tiempo' },
-    { id: 4, name: 'Carlos Mendoza Rios', matricula: '202303045', uid: 'FF:20:11:09', time: '07:15:33 AM', status: 'A tiempo' },
+    { id: 1, name: 'Valeria Morales Cruz', matricula: '202303001', uid: '9A:4B:C1:20', time: '07:44:12 AM', status: 'retardo' },
+    { id: 2, name: 'Diego Fernando Ruiz', matricula: '202303014', uid: '3D:88:5A:F2', time: '07:29:50 AM', status: 'a_tiempo' },
+    { id: 3, name: 'Sofia Elizabeth Lara', matricula: '202303088', uid: 'B1:05:44:E9', time: '07:28:10 AM', status: 'a_tiempo' },
+    { id: 4, name: 'Carlos Mendoza Rios', matricula: '202303045', uid: 'FF:20:11:09', time: '07:15:33 AM', status: 'a_tiempo' },
   ]);
+
+  const targetPercentage = appConfig.dashboardSchedule?.targetAttendancePercentage || 85;
+  const isBelowTarget = kpis.porcentajeAsistencia < targetPercentage;
 
   const cardRadius = getCardRadiusClass();
   const cardShadow = getCardShadowClass();
@@ -74,8 +90,12 @@ export default function DashboardView() {
       <div className={`theme-card border ${cardRadius} p-5 ${cardShadow}`}>
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Asistencias</span>
-          <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-            {kpis.porcentajeAsistencia}%
+          <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded border ${
+            isBelowTarget
+              ? 'bg-amber-50 text-amber-700 border-amber-200'
+              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+          }`}>
+            {kpis.porcentajeAsistencia}% {isBelowTarget && `(Meta: ${targetPercentage}%)`}
           </span>
         </div>
         <div className="mt-3">
@@ -235,15 +255,25 @@ export default function DashboardView() {
                   <td className="px-6 py-3 font-mono text-indigo-900 font-semibold">{scan.uid}</td>
                   <td className="px-6 py-3 text-slate-500 font-mono">{scan.time}</td>
                   <td className="px-6 py-3">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
-                        scan.status === 'A tiempo'
+                    {(() => {
+                      const isOntime = scan.status === 'a_tiempo' || String(scan.status).toLowerCase().includes('tiempo');
+                      const key = isOntime ? 'a_tiempo' : 'retardo';
+                      const st = appConfig.statusLabels?.[key] || {
+                        label: isOntime ? 'A tiempo' : 'Retardo',
+                        color: isOntime ? 'emerald' : 'amber',
+                      };
+                      const colorClass =
+                        st.color === 'emerald'
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : 'bg-amber-50 text-amber-700 border-amber-200'
-                      }`}
-                    >
-                      {scan.status}
-                    </span>
+                          : st.color === 'amber'
+                          ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : 'bg-rose-50 text-rose-700 border-rose-200';
+                      return (
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${colorClass}`}>
+                          {st.label}
+                        </span>
+                      );
+                    })()}
                   </td>
                 </tr>
               ))}
