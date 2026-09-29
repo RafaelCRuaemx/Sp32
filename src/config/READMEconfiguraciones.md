@@ -431,6 +431,49 @@ dashboardSchedule: {
 
 ---
 
+## 20.1 Estilos y Variedad de la Gráfica de Accesos (`layout.dashboard.chart`)
+
+Permite personalizar el tipo de gráfica, sus colores, la forma de las barras y las líneas de guía en el panel principal:
+
+```javascript
+layout: {
+  dashboard: {
+    chart: {
+      // 1. Tipo de gráfica:
+      // 'donut'           -> Anillo circular de porcentajes (Asistencias / Retardos / Faltas)
+      // 'gauge'           -> Velocímetro / Arco de cumplimiento de meta escolar
+      // 'area'            -> Curva continua de área SVG fluida con degradado
+      // 'horizontal-bars' -> Tráfico por torniquete y punto de acceso
+      // 'step'            -> Línea escalonada de aforo acumulado en escalera
+      // 'gradient-bars'   -> Barras modernas con degradado vertical
+      // 'bars'            -> Barras verticales tradicionales
+      type: 'donut',
+
+      // 2. Paleta de colores:
+      // 'theme'    -> Sincronizado automáticamente con tu color institucional
+      // 'gradient' -> Degradado entre el color primario y el secundario
+      // 'emerald'  -> Verde esmeralda fresco
+      // 'sky'      -> Azul cielo tecnológico
+      // 'amber'    -> Dorado / Ámbar
+      // 'rose'     -> Rosa / Guinda
+      // 'slate'    -> Gris grafito elegante
+      color: 'theme',
+
+      // 3. Forma de las barras ('bars' o 'gradient-bars'):
+      // 'rounded' -> Esquinas superiores redondeadas estándar (8px)
+      // 'pill'    -> Cápsula completamente redondeada
+      // 'square'  -> Rectangular recto
+      barShape: 'rounded',
+
+      showAverageLine: true, // Línea horizontal punteada con el promedio de accesos
+      showPeakBadge: true,   // Badge superior con el pico máximo y hora punta
+    }
+  }
+}
+```
+
+---
+
 ## 21. Botones de Filtro Rápido en Tablas
 
 Define qué botones de filtro con un solo clic aparecen arriba de cada tabla:

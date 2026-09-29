@@ -82,6 +82,41 @@ export const appConfig = {
       // 'side-by-side' -> Lado a lado en columnas
       // 'stacked'      -> Uno debajo del otro a ancho completo
       chartLayout: 'stacked',
+
+      // CONFIGURACIÓN Y ESTILO VISUAL DE LA GRÁFICA:
+      chart: {
+        // Tipo de gráfica:
+        // 'donut'           -> Anillo circular de porcentajes (Asistencias / Retardos / Faltas)
+        // 'gauge'           -> Velocímetro / Arco de cumplimiento de meta escolar
+        // 'area'            -> Curva continua de área SVG fluida (estilo Stripe / Vercel)
+        // 'horizontal-bars' -> Tráfico por torniquete y punto de acceso
+        // 'step'            -> Línea escalonada de aforo acumulado
+        // 'gradient-bars'   -> Barras modernas con degradado vertical
+        // 'bars'            -> Barras verticales tradicionales
+        type: 'gradient-bars',
+
+        // Paleta de color:
+        // 'theme'    -> Sincronizado automáticamente con el color institucional activo
+        // 'gradient' -> Degradado moderno entre el color primario y el de acento
+        // 'emerald'  -> Verde esmeralda fresco
+        // 'sky'      -> Azul cielo tecnológico
+        // 'amber'    -> Dorado / Ámbar energético
+        // 'rose'     -> Rosa / Guinda
+        // 'slate'    -> Gris grafito elegante
+        color: 'theme',
+
+        // Forma de las puntas en las barras (solo para 'bars' o 'gradient-bars'):
+        // 'rounded' -> Redondeado suave superior (8px)
+        // 'pill'    -> Forma de cápsula / píldora completa
+        // 'square'  -> Recto plano
+        barShape: 'rounded',
+
+        // ¿Mostrar línea guía horizontal con el promedio de accesos por hora?
+        showAverageLine: true,
+
+        // ¿Mostrar badge en la esquina superior con el pico máximo de aforo?
+        showPeakBadge: true,
+      },
     },
 
     // POSICIÓN DE BOTONES EN LAS TABLAS:

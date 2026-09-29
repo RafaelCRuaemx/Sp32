@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { appConfig, getCardRadiusClass, getCardShadowClass } from '../config/appConfig';
+import AttendanceChart from '../components/AttendanceChart';
 
 /**
- * DashboardView - Pantalla 1: Resumen y métricas del sistema RFID
- * Soporta configuración dinámica de columnas (2, 3 o 4), visibilidad de widgets,
- * reordenamiento de secciones (widgetsOrder) y disposición de gráficas (chartLayout).
- */
+ * DashboardView- Pantalla 1 Resumen y metricas del sisdtema RFID
+ * La grafica es renderizada por AttendanceChart (src/components/AttedanceChart.jsx)
+ * Tipo activo: appConfig.layout.dashboard.chart.type
+*/
 
-
-//mock de usuarios para realizar demo de como se veria el sistema 
 export default function DashboardView() {
   const [kpis] = useState({
     totalPadron: 250,
@@ -19,7 +18,6 @@ export default function DashboardView() {
     inasistencias: 13,
     porcentajeInasistencias: 5.2,
   });
-
   const isVespertino = appConfig.dashboardSchedule?.activeShift === 'vespertino';
   const [hourlyFlow] = useState(
     isVespertino
@@ -42,7 +40,6 @@ export default function DashboardView() {
           { hour: '08:30', count: 4, height: '6%' },
         ]
   );
-
   const [recentScans] = useState([
     { id: 1, name: 'Valeria Morales Cruz', matricula: '202303001', uid: '9A:4B:C1:20', time: '07:44:12 AM', status: 'retardo' },
     { id: 2, name: 'Diego Fernando Ruiz', matricula: '202303014', uid: '3D:88:5A:F2', time: '07:29:50 AM', status: 'a_tiempo' },
@@ -60,7 +57,7 @@ export default function DashboardView() {
   const showHardwareCard = appConfig.layout?.dashboard?.showHardwareCard !== false;
   const showRecentScans = appConfig.layout?.dashboard?.showRecentScans !== false;
   const isStacked = appConfig.layout?.dashboard?.chartLayout === 'stacked';
-  const widgetsOrder = appConfig.layout?.dashboard?.widgetsOrder || ['kpis', 'charts', 'recentScans'];
+  const widgetsOrder = appConfig.layout?.dashboard?.widgetsOrder || ['kpis' , 'charts', 'recentScans'];
 
   const kpiGridClass =
     kpiColumns === 2
@@ -69,31 +66,23 @@ export default function DashboardView() {
       ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'
       : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4';
 
-  // Renderizador de Tarjetas KPIs
-  const renderKpis = () => (
+       const renderKpis = () => (
     <div key="kpis" className={kpiGridClass}>
-      {/* KPI 1: Padrón Total */}
       <div className={`theme-card border ${cardRadius} p-5 ${cardShadow}`}>
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total de Usuarios</span>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
-            TOTAL
-          </span>
+          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">TOTAL</span>
         </div>
         <div className="mt-3">
           <span className="text-3xl font-extrabold text-slate-900 font-mono">{kpis.totalPadron}</span>
           <p className="text-xs text-slate-500 mt-1">Usuarios registrados en sistema</p>
         </div>
       </div>
-
-      {/* KPI 2: Asistencias */}
       <div className={`theme-card border ${cardRadius} p-5 ${cardShadow}`}>
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Asistencias</span>
           <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded border ${
-            isBelowTarget
-              ? 'bg-amber-50 text-amber-700 border-amber-200'
-              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+            isBelowTarget ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
           }`}>
             {kpis.porcentajeAsistencia}% {isBelowTarget && `(Meta: ${targetPercentage}%)`}
           </span>
@@ -103,8 +92,6 @@ export default function DashboardView() {
           <p className="text-xs text-slate-500 mt-1">Ingresos dentro de tolerancia ({appConfig.schedule.horaEntrada})</p>
         </div>
       </div>
-
-      {/* KPI 3: Retardos */}
       <div className={`theme-card border ${cardRadius} p-5 ${cardShadow}`}>
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Retardos</span>
@@ -117,8 +104,6 @@ export default function DashboardView() {
           <p className="text-xs text-slate-500 mt-1">Posterior a {appConfig.schedule.horaEntrada}</p>
         </div>
       </div>
-
-      {/* KPI 4: Inasistencias */}
       <div className={`theme-card border ${cardRadius} p-5 ${cardShadow}`}>
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Inasistencias</span>
@@ -134,49 +119,36 @@ export default function DashboardView() {
     </div>
   );
 
-  // Renderizador de Gráfica de Flujo y Telemetría ESP32
   const renderChartsAndHardware = () => {
     if (!showHourlyChart && !showHardwareCard) return null;
 
-    return (
+    const chartConfig = appConfig.layout?.dashboard?.chart || {};
+    const showPeakBadge = chartConfig.showPeakBadge !== false;
+    const maxScans = Math.max(...hourlyFlow.map((i) => i.count), 1);
+    const peakItem = hourlyFlow.find((i) => i.count === maxScans) || hourlyFlow[0];
+    
+   return (
       <div key="charts" className={isStacked ? 'flex flex-col gap-6' : 'grid grid-cols-1 lg:grid-cols-3 gap-6'}>
-        {/* Gráfica de Flujo por Hora */}
         {showHourlyChart && (
           <div className={`${isStacked || !showHardwareCard ? 'w-full' : 'lg:col-span-2'} theme-card border ${cardRadius} p-6 ${cardShadow}`}>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-base font-semibold text-slate-900">Flujo de Accesos por Hora</h2>
                 <p className="text-xs text-slate-500">Lecturas de tarjetas RFID registradas en torniquetes</p>
               </div>
-              <span className="text-xs font-mono bg-slate-100 px-2.5 py-1 rounded text-slate-700 border border-slate-200">
-                Pico máx: 95 scans
-              </span>
+              {showPeakBadge && (
+                <span className="text-xs font-mono theme-accent-light px-2.5 py-1 rounded border font-semibold shadow-2xs">
+                  Pico: {peakItem?.count} scans ({peakItem?.hour})
+                </span>
+              )}
             </div>
-
-            {/* Barras de la gráfica */}
-            <div className="h-48 flex items-end justify-between gap-3 pt-6 pb-2 px-2 border-b border-slate-200">
-              {hourlyFlow.map((item, idx) => (
-                <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end group relative">
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-8 bg-slate-900 text-white text-xs px-2 py-0.5 rounded pointer-events-none whitespace-nowrap shadow-md font-mono">
-                    {item.count} accesos
-                  </div>
-                  <div
-                    style={{ height: item.height }}
-                    className="w-full max-w-[42px] bg-slate-700 group-hover:bg-indigo-600 rounded-t transition-colors duration-200 shadow-xs"
-                  ></div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-between gap-3 px-2 pt-2 text-xs font-mono text-slate-500">
-              {hourlyFlow.map((item, idx) => (
-                <span key={idx} className="flex-1 text-center truncate">{item.hour}</span>
-              ))}
-            </div>
+            <AttendanceChart
+              chartConfig={chartConfig}
+              hourlyFlow={hourlyFlow}
+              kpis={kpis}
+            />
           </div>
         )}
-
-        {/* Estado del Dispositivo ESP32 y Lector */}
         {showHardwareCard && (
           <div className={`${isStacked || !showHourlyChart ? 'w-full' : 'lg:col-span-1'} theme-card border ${cardRadius} p-6 ${cardShadow} flex flex-col justify-between`}>
             <div>
@@ -187,7 +159,6 @@ export default function DashboardView() {
                   {appConfig.hardware.status.toUpperCase()}
                 </span>
               </div>
-
               <div className="space-y-3 text-xs">
                 <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
                   <span className="text-slate-500 font-medium">Módulo Lector:</span>
@@ -213,29 +184,22 @@ export default function DashboardView() {
                 </div>
               </div>
             </div>
-
             <div className="pt-4 mt-4 border-t border-slate-100">
-              <span className="text-[11px] text-slate-400 font-mono block">
-                Firmware ESP32 v2.4 • Conectado a Django API
-              </span>
+              <span className="text-[11px] text-slate-400 font-mono block">Firmware ESP32 v2.4 • Conectado a Django API</span>
             </div>
           </div>
         )}
       </div>
     );
-  };
-
-  // Renderizador de Accesos Recientes
-  const renderRecentScans = () => {
+  };  
+   const renderRecentScans = () => {
     if (!showRecentScans) return null;
-
     return (
       <div key="recentScans" className={`theme-card border ${cardRadius} overflow-hidden ${cardShadow}`}>
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <h2 className="text-sm font-bold text-slate-900">Últimos Accesos Detectados (Tiempo Real)</h2>
           <span className="text-xs text-slate-500 font-mono">EN VIVO</span>
         </div>
-
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-700">
             <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 font-mono">
@@ -263,11 +227,9 @@ export default function DashboardView() {
                         color: isOntime ? 'emerald' : 'amber',
                       };
                       const colorClass =
-                        st.color === 'emerald'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : st.color === 'amber'
-                          ? 'bg-amber-50 text-amber-700 border-amber-200'
-                          : 'bg-rose-50 text-rose-700 border-rose-200';
+                        st.color === 'emerald' ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : st.color === 'amber' ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : 'bg-rose-50 text-rose-700 border-rose-200';
                       return (
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${colorClass}`}>
                           {st.label}
@@ -283,16 +245,12 @@ export default function DashboardView() {
       </div>
     );
   };
-
   return (
     <div className="space-y-6">
-      {/* Header del Dashboard */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Panel de Control</h1>
-          <p className="text-sm text-slate-500">
-            {appConfig.institution.name} • Monitoreo en tiempo real
-          </p>
+          <p className="text-sm text-slate-500">{appConfig.institution.name} • Monitoreo en tiempo real</p>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2.5 py-1 rounded border border-slate-200">
@@ -300,18 +258,12 @@ export default function DashboardView() {
           </span>
         </div>
       </div>
-
-      {/* Renderizado dinámico de las secciones según widgetsOrder en appConfig.js */}
       {widgetsOrder.map((sectionKey) => {
         switch (sectionKey) {
-          case 'kpis':
-            return renderKpis();
-          case 'charts':
-            return renderChartsAndHardware();
-          case 'recentScans':
-            return renderRecentScans();
-          default:
-            return null;
+          case 'kpis': return renderKpis();
+          case 'charts': return renderChartsAndHardware();
+          case 'recentScans': return renderRecentScans();
+          default: return null;
         }
       })}
     </div>
