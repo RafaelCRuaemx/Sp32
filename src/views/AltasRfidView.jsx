@@ -10,81 +10,16 @@ import { appConfig, getCardRadiusClass, getCardShadowClass, playFeedbackSound } 
 export default function AltasRfidView({ showToast }) {
   const cardRadius = getCardRadiusClass();
   const cardShadow = getCardShadowClass();
-  const [usuarios, setUsuarios] = useState([
-    //mock de usuarios apra realizar demo de como se veria el sistema
-    {
-      id: 1,
-      nombre: 'Valeria Morales Cruz',
-      matricula: '202303001',
-      correo: 'valeria.morales@benitto.edu.mx',
-      telefono: '55-1234-5678',
-      rol: 'Estudiante',
-      area: 'Ing. en Sistemas Computacionales',
-      uidRfid: '9A:4B:C1:20',
-      fechaAlta: '2026-09-01',
-      activo: true,
-    },
-    {
-      id: 2,
-      nombre: 'Diego Fernando Ruiz',
-      matricula: '202303014',
-      correo: 'diego.ruiz@benitto.edu.mx',
-      telefono: '55-2345-6789',
-      rol: 'Estudiante',
-      area: 'Ing. Mecatrónica',
-      uidRfid: '3D:88:5A:F2',
-      fechaAlta: '2026-09-01',
-      activo: true,
-    },
-    {
-      id: 3,
-      nombre: 'Ing. Roberto Mendoza Peña',
-      matricula: 'DOC-8820',
-      correo: 'roberto.mendoza@benitto.edu.mx',
-      telefono: '55-8899-0011',
-      rol: 'Docente',
-      area: 'Docencia y Laboratorios',
-      uidRfid: 'FF:20:11:09',
-      fechaAlta: '2026-08-15',
-      activo: true,
-    },
-    {
-      id: 4,
-      nombre: 'Sofia Elizabeth Lara',
-      matricula: '202303088',
-      correo: 'sofia.lara@benitto.edu.mx',
-      telefono: '55-3456-7890',
-      rol: 'Estudiante',
-      area: 'Ing. Electrónica',
-      uidRfid: 'B1:05:44:E9',
-      fechaAlta: '2026-09-02',
-      activo: true,
-    },
-    {
-      id: 5,
-      nombre: 'Lic. Claudia Nava Sánchez',
-      matricula: 'ADM-4012',
-      correo: 'claudia.nava@benitto.edu.mx',
-      telefono: '55-7766-5544',
-      rol: 'Administrativo',
-      area: 'Administración Escolar',
-      uidRfid: '7C:12:F3:A8',
-      fechaAlta: '2026-08-10',
-      activo: true,
-    },
-    {
-      id: 6,
-      nombre: 'Mariana Gutierrez Vega',
-      matricula: '202303032',
-      correo: 'mariana.gutierrez@benitto.edu.mx',
-      telefono: '55-4567-8901',
-      rol: 'Estudiante',
-      area: 'Ing. en Sistemas Computacionales',
-      uidRfid: '5B:33:CD:19',
-      fechaAlta: '2026-09-03',
-      activo: true,
-    },
-  ]);
+  const [usuarios, setUsuarios] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    setIsLoading(true);
+    UsuariosRfidService.getUsuarios()
+      .then((data) => setUsuarios(Array.isArray(data) ? data : []))
+      .catch((err) => console.error(err))
+      .finally(() => setIsLoading(false));
+  }, []);
 
   // Control de Modal y Edición
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -149,25 +84,30 @@ export default function AltasRfidView({ showToast }) {
     }));
   };
 
-  // DOBLE VERIFICACIÓN EN "LEER ESP32"
-  const simularCapturaUidEsp32 = () => {
-    const hex = Array.from({ length: 4 }, () =>
-      Math.floor(Math.random() * 256)
-        .toString(16)
-        .toUpperCase()
-        .padStart(2, '0')
-    ).join(':');
-
-    // Si ya existe un UID previo, pedir confirmación antes de sobrescribir
-    if (formData.uidRfid && formData.uidRfid.trim() !== '') {
-      setPendingUidOverwrite(hex);
-      playFeedbackSound('warning');
-    } else {
-      setFormData((prev) => ({ ...prev, uidRfid: hex }));
-      playFeedbackSound('success');
-      if (showToast) {
-        showToast('Lectura ESP32 Detectada', `Tag RFID capturado: ${hex}`, 'info');
+  // DOBLE VERIFICACIÓN EN "LEER ESP32" (AHORA CONECTADO A DJANGO)
+  const simularCapturaUidEsp32 = async () => {
+    try {
+      const resp = await UsuariosRfidService.getUltimoUidLeido();
+      const hex = resp.uid;
+      
+      if (!hex || hex === 'Ninguno') {
+        if (showToast) showToast('Atención', 'No se ha detectado ninguna tarjeta en el ESP32.', 'warning');
+        return;
       }
+
+      // Si ya existe un UID previo, pedir confirmación antes de sobrescribir
+      if (formData.uidRfid && formData.uidRfid.trim() !== '' && formData.uidRfid !== hex) {
+        setPendingUidOverwrite(hex);
+        playFeedbackSound('warning');
+      } else {
+        setFormData((prev) => ({ ...prev, uidRfid: hex }));
+        playFeedbackSound('success');
+        if (showToast) {
+          showToast('Lectura ESP32 Detectada', `Tag RFID capturado: ${hex}`, 'success');
+        }
+      }
+    } catch (err) {
+      if (showToast) showToast('Error', 'No se pudo contactar al servidor para leer el ESP32', 'error');
     }
   };
 
@@ -207,55 +147,30 @@ export default function AltasRfidView({ showToast }) {
 
   // PASO 2 DE GUARDADO: Confirmación final
   const handleFinalSubmit = async () => {
-    if (editingUserId) {
-      setUsuarios((prev) =>
-        prev.map((u) =>
-          u.id === editingUserId
-            ? {
-                ...u,
-                nombre: formData.nombre.trim(),
-                matricula: formData.matricula.trim().toUpperCase(),
-                correo: formData.correo.trim() || `${formData.matricula.toLowerCase()}@benitto.edu.mx`,
-                telefono: formData.telefono.trim() || 'No especificado',
-                rol: formData.rol,
-                area: formData.area.trim() || 'General',
-                uidRfid: formData.uidRfid.trim().toUpperCase(),
-              }
-            : u
-        )
-      );
-
-      if (showToast) {
-        showToast('Usuario Actualizado', `Los datos de ${formData.nombre} fueron guardados.`, 'success');
-      }
-    } else {
-      const nuevoUsuario = {
-        id: Date.now(),
+    const payload = {
         nombre: formData.nombre.trim(),
         matricula: formData.matricula.trim().toUpperCase(),
-        correo: formData.correo.trim() || `${formData.matricula.toLowerCase()}@benitto.edu.mx`,
-        telefono: formData.telefono.trim() || 'No especificado',
         rol: formData.rol,
         area: formData.area.trim() || 'General',
         uidRfid: formData.uidRfid.trim().toUpperCase(),
-        fechaAlta: new Date().toISOString().split('T')[0],
-        activo: true,
-      };
+        activo: true
+    };
 
-      setUsuarios((prev) => [nuevoUsuario, ...prev]);
-
-      try {
-        await UsuariosRfidService.registrarUsuario(nuevoUsuario).catch(() => {});
-      } catch {
-        // Backend offline
-      }
-
-      if (showToast) {
-        showToast('Usuario Registrado', `${nuevoUsuario.nombre} ha sido dado de alta exitosamente.`, 'success');
-      }
+    try {
+        if (editingUserId) {
+            // Si tuvieramos endpoint de edición: await UsuariosRfidService.actualizarUsuario(editingUserId, payload);
+            // Por ahora simulamos el state update:
+            setUsuarios((prev) => prev.map((u) => u.id === editingUserId ? { ...u, ...payload } : u));
+            if (showToast) showToast('Usuario Actualizado', `Los datos de ${payload.nombre} fueron guardados.`, 'success');
+        } else {
+            const resp = await UsuariosRfidService.registrarUsuario(payload);
+            setUsuarios((prev) => [resp, ...prev]);
+            if (showToast) showToast('Usuario Registrado', `${payload.nombre} ha sido dado de alta exitosamente.`, 'success');
+        }
+        handleCloseModal();
+    } catch (err) {
+        if (showToast) showToast('Error', 'No se pudo guardar: ' + err.message, 'error');
     }
-
-    handleCloseModal();
   };
 
   // DOBLE VERIFICACIÓN EN ELIMINAR USUARIO

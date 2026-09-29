@@ -93,7 +93,7 @@ export const appConfig = {
         // 'step'            -> Línea escalonada de aforo acumulado
         // 'gradient-bars'   -> Barras modernas con degradado vertical
         // 'bars'            -> Barras verticales tradicionales
-        type: 'gradient-bars',
+        type: 'donut',
 
         // Paleta de color:
         // 'theme'    -> Sincronizado automáticamente con el color institucional activo
@@ -285,6 +285,31 @@ export const appConfig = {
       mockMode: true,                // true = modo prueba en navegador; false = conecta con Django
       issuerName: 'Control Escolar RFID',
     },
+  },
+
+  // ================================================================================
+  // 11.5 CONEXIÓN CON EL BACKEND (API DJANGO)
+  // ================================================================================
+  // ┌─────────────────────────────────────────────────────────────────────────────┐
+  // │  useMock: true   → El sistema usa datos de demostración internos.           │
+  // │                    Funciona sin Django, ideal para desarrollo del frontend.  │
+  // │                                                                             │
+  // │  useMock: false  → El sistema consulta el servidor Django REST.             │
+  // │                    Requiere que Django esté corriendo y la URL configurada   │
+  // │                    en el archivo .env (VITE_API_URL=http://127.0.0.1:8000/api)│
+  // └─────────────────────────────────────────────────────────────────────────────┘
+  api: {
+    useMock: false,   // ← CAMBIA A false CUANDO DJANGO ESTÉ LISTO
+
+    // Tiempo máximo de espera para respuestas del servidor (ms)
+    // Si Django tarda más que esto, se mostrará un error de conexión.
+    timeoutMs: 8000,
+
+    // ¿Mostrar un indicador de "Cargando..." mientras se consulta Django?
+    showLoadingSpinner: true,
+
+    // ¿Reintentar automáticamente si falla la conexión?
+    retryOnError: false,
   },
 
   // ================================================================================

@@ -10,64 +10,28 @@ import { appConfig, getCardRadiusClass, getCardShadowClass, playFeedbackSound } 
 export default function InasistenciasView({ showToast }) {
   const cardRadius = getCardRadiusClass();
   const cardShadow = getCardShadowClass();
-  const [inasistencias, setInasistencias] = useState([
-    {
-      //mock de usuarios para realziar demo de como se veria el sistema
-      id: 101,
-      nombre: 'Mateo Hernandez Nava',
-      matricula: '202303022',
-      grupo: '6to - Sistemas A',
-      fecha: '2026-09-21',
-      estado: 'injustificada',
-      motivoJustificacion: null,
-      folio: null,
-      tutorTelefono: '55-1234-5678',
-    },
-    {
-      id: 102,
-      nombre: 'Fernanda Castillo Montes',
-      matricula: '202303057',
-      grupo: '6to - Electrónica B',
-      fecha: '2026-09-21',
-      estado: 'injustificada',
-      motivoJustificacion: null,
-      folio: null,
-      tutorTelefono: '55-8765-4321',
-    },
-    {
-      id: 103,
-      nombre: 'Rodrigo Albarrán Peña',
-      matricula: '202303081',
-      grupo: '4to - Mecatrónica',
-      fecha: '2026-09-21',
-      estado: 'justificada',
-      motivoJustificacion: 'Cita Médica IMSS',
-      folio: 'MED-9021',
-      tutorTelefono: '55-3344-5566',
-    },
-    {
-      id: 104,
-      nombre: 'Andrea Paulina Salgado',
-      matricula: '202303112',
-      grupo: '6to - Sistemas A',
-      fecha: '2026-09-21',
-      estado: 'injustificada',
-      motivoJustificacion: null,
-      folio: null,
-      tutorTelefono: '55-9988-7766',
-    },
-    {
-      id: 105,
-      nombre: 'Emiliano Zapata Godínez',
-      matricula: '202303120',
-      grupo: '2do - Tronco Común',
-      fecha: '2026-09-21',
-      estado: 'injustificada',
-      motivoJustificacion: null,
-      folio: null,
-      tutorTelefono: '55-4422-1100',
-    },
-  ]);
+  const getTodayString = () => new Date().toISOString().split('T')[0];
+  const getLastWeekString = () => {
+    const lastWeek = new Date();
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    return lastWeek.toISOString().split('T')[0];
+  };
+
+  const [dateRange, setDateRange] = useState({
+    start: getLastWeekString(),
+    end: getTodayString()
+  });
+
+  const [inasistencias, setInasistencias] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    setIsLoading(true);
+    InasistenciasService.getInasistencias({ start_date: dateRange.start, end_date: dateRange.end })
+      .then((data) => setInasistencias(Array.isArray(data) ? data : []))
+      .catch((err) => console.error(err))
+      .finally(() => setIsLoading(false));
+  }, [dateRange.start, dateRange.end]);
 
   const defaultReason = appConfig.justificationsForm?.defaultReason || appConfig.justifications[0] || 'Incapacidad Médica';
   const [filterEstado, setFilterEstado] = useState('todos');
@@ -260,6 +224,25 @@ export default function InasistenciasView({ showToast }) {
             {inasistencias.filter((i) => i.estado === 'injustificada').length} Faltas pendientes por justificar
           </span>
         </div>
+      </div>
+      {/* Controles de Filtro de Fecha */}
+      <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 w-fit">
+        <span className="text-sm font-semibold text-slate-600 flex items-center gap-1">
+          📅 Filtrar periodo:
+        </span>
+        <input 
+          type="date" 
+          value={dateRange.start}
+          onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+          className="text-sm px-2 py-1.5 border border-slate-300 rounded focus:outline-none focus:border-indigo-500 font-mono text-slate-700"
+        />
+        <span className="text-sm text-slate-400 font-medium">al</span>
+        <input 
+          type="date" 
+          value={dateRange.end}
+          onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+          className="text-sm px-2 py-1.5 border border-slate-300 rounded focus:outline-none focus:border-indigo-500 font-mono text-slate-700"
+        />
       </div>
 
       {/* Componente DataTable con TanStack Table */}
