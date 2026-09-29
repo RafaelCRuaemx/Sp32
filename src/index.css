@@ -9,12 +9,19 @@
   --color-accent-light: #eff6ff;
   --color-badge-border: #bfdbfe;
   --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --btn-radius: 0.5rem;
+  --btn-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --card-radius: 1rem;
+  --app-bg-color: #f8fafc;
+  --card-bg: #ffffff;
+  --card-border: var(--color-badge-border, #e2e8f0);
+  --card-border-hover: var(--color-primary, #cbd5e1);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: #f8fafc; /* slate-50 */
+  background-color: var(--app-bg-color, #f8fafc);
   color: #0f172a; /* slate-900 */
   font-family: var(--font-family-base);
   -webkit-font-smoothing: antialiased;
@@ -31,6 +38,8 @@ body {
 .theme-btn-primary {
   background-color: var(--color-primary);
   color: var(--color-primary-text);
+  border-radius: var(--btn-radius, 0.5rem);
+  box-shadow: var(--btn-shadow, none);
   transition: all 0.15s ease-in-out;
 }
 
@@ -46,4 +55,15 @@ body {
 
 .theme-text-primary {
   color: var(--color-primary);
+}
+
+/* Tarjetas con estilo configurable (fondo y borde temático) */
+.theme-card {
+  background-color: var(--card-bg, #ffffff);
+  border-color: var(--card-border, #e2e8f0);
+  transition: all 0.2s ease-in-out;
+}
+
+.theme-card:hover {
+  border-color: var(--card-border-hover, var(--card-border, #e2e8f0));
 }
