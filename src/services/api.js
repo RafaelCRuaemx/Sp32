@@ -118,6 +118,10 @@ export const UsuariosRfidService = {
    * GET /api/usuarios-rfid/?search=...
    * Lista de usuarios con sus credenciales RFID vinculadas.
    */
+  getCatalogos: async () => {
+    return request('/catalogos/');
+  },
+  
   getUsuarios: async (search = '') => {
     const endpoint = search ? `/usuarios-rfid/?search=${encodeURIComponent(search)}` : '/usuarios-rfid/';
     return request(endpoint);

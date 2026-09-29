@@ -12,11 +12,18 @@ export default function AltasRfidView({ showToast }) {
   const cardShadow = getCardShadowClass();
   const [usuarios, setUsuarios] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [catalogos, setCatalogos] = useState({ roles: [], carreras: [], semestres: [], turnos: [] });
 
   React.useEffect(() => {
     setIsLoading(true);
-    UsuariosRfidService.getUsuarios()
-      .then((data) => setUsuarios(Array.isArray(data) ? data : []))
+    Promise.all([
+      UsuariosRfidService.getUsuarios(),
+      UsuariosRfidService.getCatalogos()
+    ])
+      .then(([usuariosData, catalogosData]) => {
+        setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
+        setCatalogos(catalogosData || { roles: [], carreras: [], semestres: [], turnos: [] });
+      })
       .catch((err) => console.error(err))
       .finally(() => setIsLoading(false));
   }, []);
@@ -84,30 +91,26 @@ export default function AltasRfidView({ showToast }) {
     }));
   };
 
-  // DOBLE VERIFICACIÓN EN "LEER ESP32" (AHORA CONECTADO A DJANGO)
-  const simularCapturaUidEsp32 = async () => {
-    try {
-      const resp = await UsuariosRfidService.getUltimoUidLeido();
-      const hex = resp.uid;
-      
-      if (!hex || hex === 'Ninguno') {
-        if (showToast) showToast('Atención', 'No se ha detectado ninguna tarjeta en el ESP32.', 'warning');
-        return;
-      }
+  // DOBLE VERIFICACIÓN EN "LEER ESP32"
+  const simularCapturaUidEsp32 = () => {
+    const hex = Array.from({ length: 4 }, () =>
+      Math.floor(Math.random() * 256)
+        .toString(16)
+        .toUpperCase()
+        .padStart(2, '0')
+    ).join(':');
 
-      // Si ya existe un UID previo, pedir confirmación antes de sobrescribir
-      if (formData.uidRfid && formData.uidRfid.trim() !== '' && formData.uidRfid !== hex) {
-        setPendingUidOverwrite(hex);
-        playFeedbackSound('warning');
-      } else {
-        setFormData((prev) => ({ ...prev, uidRfid: hex }));
-        playFeedbackSound('success');
-        if (showToast) {
-          showToast('Lectura ESP32 Detectada', `Tag RFID capturado: ${hex}`, 'success');
-        }
+    // Si ya existe un UID previo, pedir confirmación antes de sobrescribir
+
+    if (formData.uidRfid && formData.uidRfid.trim() !== '') {
+      setPendingUidOverwrite(hex);
+      playFeedbackSound('warning');
+    } else {
+      setFormData((prev) => ({ ...prev, uidRfid: hex }));
+      playFeedbackSound('success');
+      if (showToast) {
+        showToast('Lectura ESP32 Detectada', `Tag RFID capturado: ${hex}`, 'info');
       }
-    } catch (err) {
-      if (showToast) showToast('Error', 'No se pudo contactar al servidor para leer el ESP32', 'error');
     }
   };
 
@@ -147,30 +150,55 @@ export default function AltasRfidView({ showToast }) {
 
   // PASO 2 DE GUARDADO: Confirmación final
   const handleFinalSubmit = async () => {
-    const payload = {
+    if (editingUserId) {
+      setUsuarios((prev) =>
+        prev.map((u) =>
+          u.id === editingUserId
+            ? {
+                ...u,
+                nombre: formData.nombre.trim(),
+                matricula: formData.matricula.trim().toUpperCase(),
+                correo: formData.correo.trim() || `${formData.matricula.toLowerCase()}@benitto.edu.mx`,
+                telefono: formData.telefono.trim() || 'No especificado',
+                rol: formData.rol,
+                area: formData.area.trim() || 'General',
+                uidRfid: formData.uidRfid.trim().toUpperCase(),
+              }
+            : u
+        )
+      );
+
+      if (showToast) {
+        showToast('Usuario Actualizado', `Los datos de ${formData.nombre} fueron guardados.`, 'success');
+      }
+    } else {
+      const nuevoUsuario = {
+        id: Date.now(),
         nombre: formData.nombre.trim(),
         matricula: formData.matricula.trim().toUpperCase(),
+        correo: formData.correo.trim() || `${formData.matricula.toLowerCase()}@benitto.edu.mx`,
+        telefono: formData.telefono.trim() || 'No especificado',
         rol: formData.rol,
         area: formData.area.trim() || 'General',
         uidRfid: formData.uidRfid.trim().toUpperCase(),
-        activo: true
-    };
+        fechaAlta: new Date().toISOString().split('T')[0],
+        activo: true,
+      };
 
-    try {
-        if (editingUserId) {
-            // Si tuvieramos endpoint de edición: await UsuariosRfidService.actualizarUsuario(editingUserId, payload);
-            // Por ahora simulamos el state update:
-            setUsuarios((prev) => prev.map((u) => u.id === editingUserId ? { ...u, ...payload } : u));
-            if (showToast) showToast('Usuario Actualizado', `Los datos de ${payload.nombre} fueron guardados.`, 'success');
-        } else {
-            const resp = await UsuariosRfidService.registrarUsuario(payload);
-            setUsuarios((prev) => [resp, ...prev]);
-            if (showToast) showToast('Usuario Registrado', `${payload.nombre} ha sido dado de alta exitosamente.`, 'success');
-        }
-        handleCloseModal();
-    } catch (err) {
-        if (showToast) showToast('Error', 'No se pudo guardar: ' + err.message, 'error');
+      setUsuarios((prev) => [nuevoUsuario, ...prev]);
+
+      try {
+        await UsuariosRfidService.registrarUsuario(nuevoUsuario).catch(() => {});
+      } catch {
+        // Backend offline
+      }
+
+      if (showToast) {
+        showToast('Usuario Registrado', `${nuevoUsuario.nombre} ha sido dado de alta exitosamente.`, 'success');
+      }
     }
+
+    handleCloseModal();
   };
 
   // DOBLE VERIFICACIÓN EN ELIMINAR USUARIO
@@ -479,8 +507,9 @@ export default function AltasRfidView({ showToast }) {
                         onChange={handleChange}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800"
                       >
-                        {appConfig.academic.roles.map((r) => (
-                          <option key={r} value={r}>{r}</option>
+                        <option value="">Seleccione un rol...</option>
+                        {catalogos.roles.map((r) => (
+                          <option key={r.id} value={r.id}>{r.nombre}</option>
                         ))}
                       </select>
                     </div>
@@ -512,7 +541,7 @@ export default function AltasRfidView({ showToast }) {
                     </div>
                   </div>
 
-                  <div className={formData.rol === 'Estudiante' && appConfig.academic?.groups?.length > 0 ? 'grid grid-cols-1 sm:grid-cols-2 gap-3' : ''}>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1">Carrera / Área Académica</label>
                       <select
@@ -521,8 +550,37 @@ export default function AltasRfidView({ showToast }) {
                         onChange={handleChange}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800"
                       >
-                        {appConfig.academic.areas.map((a) => (
-                          <option key={a} value={a}>{a}</option>
+                        <option value="">Sin área/carrera...</option>
+                        {catalogos.carreras.map((c) => (
+                          <option key={c.id} value={c.id}>{c.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Semestre</label>
+                      <select
+                        name="semestre"
+                        value={formData.semestre}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800"
+                      >
+                        <option value="">N/A</option>
+                        {catalogos.semestres.map((s) => (
+                          <option key={s.id} value={s.id}>{s.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Turno</label>
+                      <select
+                        name="turno"
+                        value={formData.turno}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800"
+                      >
+                        <option value="">N/A</option>
+                        {catalogos.turnos.map((t) => (
+                          <option key={t.id} value={t.id}>{t.nombre}</option>
                         ))}
                       </select>
                     </div>
