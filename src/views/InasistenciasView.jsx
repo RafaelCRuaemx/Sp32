@@ -87,8 +87,10 @@ export default function InasistenciasView({ showToast }) {
   const handleFinalSubmit = async () => {
     if (!selectedItem) return;
 
+    // El usuario_id real viene del campo 'usuario_id' del objeto (nuevo) o del 'id' (dato viejo)
+    const usuarioId = selectedItem.usuario_id || selectedItem.id;
+
     const payload = {
-      usuario_id: selectedItem.id,
       fecha: selectedItem.fecha,
       motivo,
       folio: folio || 'S/F',
@@ -110,7 +112,7 @@ export default function InasistenciasView({ showToast }) {
     );
 
     try {
-      await InasistenciasService.justificar(payload).catch(() => {});
+      await InasistenciasService.justificar(usuarioId, payload).catch(() => {});
     } catch {
       // Backend offline
     }
@@ -139,18 +141,20 @@ export default function InasistenciasView({ showToast }) {
   const columns = [
     {
       accessorKey: 'nombre',
-      header: 'Alumno / Matrícula',
+      header: 'Alumno',
       cell: (info) => (
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-700 font-mono shrink-0">
             {info.getValue().substring(0, 2).toUpperCase()}
           </div>
-          <div>
-            <div className="font-semibold text-slate-900">{info.getValue()}</div>
-            <div className="text-[11px] font-mono text-slate-500">{info.row.original.matricula}</div>
-          </div>
+          <span className="font-semibold text-slate-900">{info.getValue()}</span>
         </div>
       ),
+    },
+    {
+      accessorKey: 'matricula',
+      header: 'Matrícula',
+      cell: (info) => <span className="font-mono text-slate-600 font-medium">{info.getValue()}</span>,
     },
     {
       accessorKey: 'grupo',
@@ -163,9 +167,13 @@ export default function InasistenciasView({ showToast }) {
       cell: (info) => <span className="font-mono text-slate-500">{info.getValue()}</span>,
     },
     {
-      accessorKey: 'tutorTelefono',
+      id: 'contacto',
       header: 'Contacto Tutor',
-      cell: (info) => <span className="font-mono text-slate-600">{formatPhoneNumber(info.getValue())}</span>,
+      cell: (info) => {
+        const item = info.row.original;
+        const phone = item.tutorTelefono || item.telefono || item.telefono_tutor || item.contacto;
+        return <span className="font-mono text-slate-600">{formatPhoneNumber(phone)}</span>;
+      }
     },
     {
       accessorKey: 'estado',
@@ -257,6 +265,8 @@ export default function InasistenciasView({ showToast }) {
         columns={columns}
         searchPlaceholder="Buscar por alumno, matrícula o grupo..."
         exportFileName="reporte_inasistencias_rfid"
+          exportTitle="Reporte de Inasistencias"
+          exportDateRange={`Del ${dateRange.start} al ${dateRange.end}`}
         extraToolbar={
           <div className="flex items-center gap-1.5 overflow-x-auto">
             <span className="text-xs font-medium text-slate-500 mr-1">Filtrar:</span>

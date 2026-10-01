@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { appConfig, getCardShadowClass } from '../config/appConfig';
 import { authService } from '../services/authService';
 import QrEnrollModal from '../components/QrEnrollModal';
-import {ExclamationCircleIcon, ArrowRightIcon, DevicePhoneMobileIcon } from '@heroicons/react/outline';
+import {ExclamationCircleIcon, ArrowRightIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline';
 
 export default function LoginView({ onLoginSuccess }) {
   const [step, setStep] = useState(1); // 1 = Credenciales, 2 = Desafío 2FA

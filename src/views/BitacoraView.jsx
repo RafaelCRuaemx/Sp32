@@ -281,6 +281,8 @@ export default function BitacoraView({ showToast }) {
           columns={columns}
           searchPlaceholder="Buscar por nombre, matrícula o UID..."
           exportFileName="bitacora_accesos_rfid"
+          exportTitle="Reporte de Accesos y Asistencia"
+          exportDateRange={`Del ${dateRange.start} al ${dateRange.end}`}
           extraToolbar={
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-1 overflow-x-auto">
