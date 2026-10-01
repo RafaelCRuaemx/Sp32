@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BitacoraService } from '../services/api';
 import DataTable from '../components/DataTables';
 import { appConfig, playFeedbackSound } from '../config/appConfig';
+import { PlusIcon, ArrowPathIcon, CalendarIcon } from '@heroicons/react/24/outline';
 
 /**
  * BitacoraView - Pantalla 2: Historial en tiempo real de accesos RFID
@@ -227,9 +228,7 @@ export default function BitacoraView({ showToast }) {
             onClick={simularEscaneo}
             className="flex items-center justify-center gap-2 px-4 py-2 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-            </svg>
+            <PlusIcon className="w-3.5 h-3.5" />
             Simular Lectura RFID
           </button>
         )}
@@ -238,7 +237,7 @@ export default function BitacoraView({ showToast }) {
       {/* Controles de Filtro de Fecha */}
       <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 w-fit">
         <span className="text-sm font-semibold text-slate-600 flex items-center gap-1">
-          📅 Filtrar periodo:
+          <CalendarIcon className="w-4 h-4 text-slate-500" /> Filtrar periodo:
         </span>
         <input 
           type="date" 
@@ -258,10 +257,7 @@ export default function BitacoraView({ showToast }) {
       {/* Indicador de carga */}
       {isLoading && (
         <div className="flex items-center justify-center py-16 text-slate-400 gap-3">
-          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-          </svg>
+          <ArrowPathIcon className="w-5 h-5 animate-spin" />
           <span className="text-sm font-medium">Cargando registros...</span>
         </div>
       )}
@@ -273,7 +269,7 @@ export default function BitacoraView({ showToast }) {
           <div>
             <p className="font-semibold">No se pudo conectar con el servidor</p>
             <p className="text-xs mt-0.5 text-rose-500 font-mono">{apiError}</p>
-            <p className="text-xs mt-1 text-rose-600">Revisa que <code>appConfig.api.useMock = true</code> o que Django esté corriendo.</p>
+            <p className="text-xs mt-1 text-rose-600">Revisa que Django esté corriendo.</p>
           </div>
         </div>
       )}
@@ -309,9 +305,7 @@ export default function BitacoraView({ showToast }) {
                   onClick={simularEscaneo}
                   className="flex items-center justify-center gap-2 px-3 py-1.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                  </svg>
+                  <PlusIcon className="w-3.5 h-3.5" />
                   Simular Lectura
                 </button>
               )}

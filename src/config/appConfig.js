@@ -546,7 +546,7 @@ export const appConfig = {
     requireEmail: false,         // ¿El correo es obligatorio para guardar? (false = opcional)
     requirePhone: true,          // ¿El teléfono es obligatorio para guardar?
     defaultRole: 'Estudiante',   // Rol preseleccionado ('Estudiante', 'Docente', 'Administrativo')
-    autoUppercaseName: true,     // Convierte automáticamente el nombre a MAYÚSCULAS
+    autoUppercaseName: false,     // Convierte automáticamente el nombre a MAYÚSCULAS
   },
 
   // ================================================================================

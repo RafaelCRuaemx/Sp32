@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ExclamationTriangleIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import DataTable from '../components/DataTables';
 import { InasistenciasService } from '../services/api';
 import { appConfig, getCardRadiusClass, getCardShadowClass, playFeedbackSound } from '../config/appConfig';
@@ -24,12 +25,14 @@ export default function InasistenciasView({ showToast }) {
 
   const [inasistencias, setInasistencias] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError] = useState(null);
 
   React.useEffect(() => {
     setIsLoading(true);
+    setApiError(null);
     InasistenciasService.getInasistencias({ start_date: dateRange.start, end_date: dateRange.end })
       .then((data) => setInasistencias(Array.isArray(data) ? data : []))
-      .catch((err) => console.error(err))
+      .catch((err) => setApiError(err.message || 'Error de conexión con el servidor'))
       .finally(() => setIsLoading(false));
   }, [dateRange.start, dateRange.end]);
 
@@ -85,9 +88,12 @@ export default function InasistenciasView({ showToast }) {
     if (!selectedItem) return;
 
     const payload = {
+      usuario_id: selectedItem.id,
+      fecha: selectedItem.fecha,
       motivo,
       folio: folio || 'S/F',
       observaciones,
+      autorizado_por: 'Administrador Web' // Pendiente a reemplazar por login real
     };
 
     setInasistencias((prev) =>
@@ -104,7 +110,7 @@ export default function InasistenciasView({ showToast }) {
     );
 
     try {
-      await InasistenciasService.justificar(selectedItem.id, payload).catch(() => {});
+      await InasistenciasService.justificar(payload).catch(() => {});
     } catch {
       // Backend offline
     }
@@ -228,7 +234,7 @@ export default function InasistenciasView({ showToast }) {
       {/* Controles de Filtro de Fecha */}
       <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 w-fit">
         <span className="text-sm font-semibold text-slate-600 flex items-center gap-1">
-          📅 Filtrar periodo:
+          <CalendarIcon className="w-4 h-4 text-slate-500" /> Filtrar periodo:
         </span>
         <input 
           type="date" 
@@ -363,9 +369,7 @@ export default function InasistenciasView({ showToast }) {
               <div className="space-y-4">
                 <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                   <div className="w-9 h-9 rounded-full bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
+                    <ExclamationTriangleIcon className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-slate-900">¿Confirmar Justificación?</h3>

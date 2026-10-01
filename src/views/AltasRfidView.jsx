@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { UsuariosRfidService } from '../services/api';
 import DataTable from '../components/DataTables';
 import { appConfig, getCardRadiusClass, getCardShadowClass, playFeedbackSound } from '../config/appConfig';
+import { PlusIcon, TrashIcon, CheckCircleIcon, ExclamationTriangleIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 
 /**
  * AltasRfidView - Pantalla 4: Gestión Integral de Usuarios y Padrón Escolar
@@ -12,10 +13,12 @@ export default function AltasRfidView({ showToast }) {
   const cardShadow = getCardShadowClass();
   const [usuarios, setUsuarios] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError] = useState(null);
   const [catalogos, setCatalogos] = useState({ roles: [], carreras: [], semestres: [], turnos: [] });
 
   React.useEffect(() => {
     setIsLoading(true);
+    setApiError(null);
     Promise.all([
       UsuariosRfidService.getUsuarios(),
       UsuariosRfidService.getCatalogos()
@@ -24,7 +27,7 @@ export default function AltasRfidView({ showToast }) {
         setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
         setCatalogos(catalogosData || { roles: [], carreras: [], semestres: [], turnos: [] });
       })
-      .catch((err) => console.error(err))
+      .catch((err) => setApiError(err.message || 'Error de conexión con el servidor'))
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -62,10 +65,12 @@ export default function AltasRfidView({ showToast }) {
     setFormData({
       nombre: usuario.nombre,
       matricula: usuario.matricula,
-      correo: usuario.correo,
-      telefono: usuario.telefono,
-      rol: usuario.rol,
-      area: usuario.area,
+      correo: usuario.correo || '',
+      telefono: usuario.telefono || '',
+      rol: usuario.rol || '',
+      area: usuario.carrera || '',
+      semestre: usuario.semestre || '',
+      turno: usuario.turno || '',
       uidRfid: usuario.uidRfid,
     });
     setIsConfirmingSave(false);
@@ -150,51 +155,40 @@ export default function AltasRfidView({ showToast }) {
 
   // PASO 2 DE GUARDADO: Confirmación final
   const handleFinalSubmit = async () => {
-    if (editingUserId) {
-      setUsuarios((prev) =>
-        prev.map((u) =>
-          u.id === editingUserId
-            ? {
-                ...u,
-                nombre: formData.nombre.trim(),
-                matricula: formData.matricula.trim().toUpperCase(),
-                correo: formData.correo.trim() || `${formData.matricula.toLowerCase()}@benitto.edu.mx`,
-                telefono: formData.telefono.trim() || 'No especificado',
-                rol: formData.rol,
-                area: formData.area.trim() || 'General',
-                uidRfid: formData.uidRfid.trim().toUpperCase(),
-              }
-            : u
-        )
-      );
-
-      if (showToast) {
-        showToast('Usuario Actualizado', `Los datos de ${formData.nombre} fueron guardados.`, 'success');
-      }
-    } else {
-      const nuevoUsuario = {
-        id: Date.now(),
+    const payload = {
         nombre: formData.nombre.trim(),
         matricula: formData.matricula.trim().toUpperCase(),
-        correo: formData.correo.trim() || `${formData.matricula.toLowerCase()}@benitto.edu.mx`,
-        telefono: formData.telefono.trim() || 'No especificado',
-        rol: formData.rol,
-        area: formData.area.trim() || 'General',
+        correo: formData.correo?.trim() || '',
+        telefono: formData.telefono?.trim() || '',
+        rol: formData.rol ? parseInt(formData.rol) : null,
+        carrera: formData.area ? parseInt(formData.area) : null,
+        semestre: formData.semestre ? parseInt(formData.semestre) : null,
+        turno: formData.turno ? parseInt(formData.turno) : null,
         uidRfid: formData.uidRfid.trim().toUpperCase(),
-        fechaAlta: new Date().toISOString().split('T')[0],
         activo: true,
-      };
+    };
 
-      setUsuarios((prev) => [nuevoUsuario, ...prev]);
-
+    if (editingUserId) {
       try {
-        await UsuariosRfidService.registrarUsuario(nuevoUsuario).catch(() => {});
-      } catch {
-        // Backend offline
+        const updatedUser = await UsuariosRfidService.actualizarUsuario(editingUserId, payload);
+        setUsuarios((prev) => prev.map((u) => (u.id === editingUserId ? updatedUser : u)));
+        if (showToast) showToast('Usuario Actualizado', `Los datos de ${payload.nombre} fueron guardados.`, 'success');
+      } catch (err) {
+        setApiError(err.message || 'Error al actualizar');
+        if (showToast) showToast('Error', err.message || 'Error al guardar', 'error');
+        setIsConfirmingSave(false);
+        return;
       }
-
-      if (showToast) {
-        showToast('Usuario Registrado', `${nuevoUsuario.nombre} ha sido dado de alta exitosamente.`, 'success');
+    } else {
+      try {
+        const createdUser = await UsuariosRfidService.registrarUsuario(payload);
+        setUsuarios((prev) => [createdUser, ...prev]);
+        if (showToast) showToast('Usuario Registrado', `${payload.nombre} ha sido dado de alta exitosamente.`, 'success');
+      } catch (err) {
+        setApiError(err.message || 'Error al registrar');
+        if (showToast) showToast('Error', err.message || 'Error al guardar', 'error');
+        setIsConfirmingSave(false);
+        return;
       }
     }
 
@@ -274,14 +268,17 @@ export default function AltasRfidView({ showToast }) {
     {
       accessorKey: 'rol',
       header: 'Rol y Carrera / Área',
-      cell: (info) => (
+      cell: (info) => {
+        const rolTexto = info.row.original.rol_nombre || 'N/A';
+        const carreraTexto = info.row.original.carrera_nombre || 'General';
+        return (
         <div>
-          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${getRolBadge(info.getValue())}`}>
-            {info.getValue()}
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${getRolBadge(rolTexto)}`}>
+            {rolTexto}
           </span>
-          <p className="text-[11px] text-slate-500 mt-1">{info.row.original.area}</p>
+          <p className="text-[11px] text-slate-500 mt-1">{carreraTexto}</p>
         </div>
-      ),
+      )},
     },
     ...((showEmail || showPhone)
       ? [
@@ -332,9 +329,7 @@ export default function AltasRfidView({ showToast }) {
               onClick={() => handleOpenEditModal(u)}
               className="px-2.5 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium shadow-xs transition-colors cursor-pointer flex items-center gap-1"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
+              <PencilSquareIcon className="w-3.5 h-3.5" />
               Editar
             </button>
             <button
@@ -342,9 +337,7 @@ export default function AltasRfidView({ showToast }) {
               title="Eliminar usuario (con confirmación)"
               className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
+              <TrashIcon className="w-3.5 h-3.5" />
             </button>
           </div>
         );
@@ -368,9 +361,7 @@ export default function AltasRfidView({ showToast }) {
             onClick={handleOpenCreateModal}
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-            </svg>
+            <PlusIcon className="w-4 h-4" />
             Crear Usuario
           </button>
         )}
@@ -430,9 +421,7 @@ export default function AltasRfidView({ showToast }) {
                 onClick={handleOpenCreateModal}
                 className="inline-flex items-center justify-center gap-2 px-3.5 py-1.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                </svg>
+                <PlusIcon className="w-4 h-4" />
                 Crear Usuario
               </button>
             )}
@@ -652,9 +641,7 @@ export default function AltasRfidView({ showToast }) {
               <div className="space-y-4">
                 <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                   <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <CheckCircleIcon className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-slate-900">
@@ -722,9 +709,7 @@ export default function AltasRfidView({ showToast }) {
           <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
               <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <TrashIcon className="w-5 h-5" />
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900">¿Dar de baja a este usuario?</h3>

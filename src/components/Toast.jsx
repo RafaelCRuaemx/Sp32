@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { appConfig } from '../config/appConfig';
+import {CheckIcon, XMarkIcon, InformationCircleIcon} from '@heroicons/react/24/outline';
 
 /**
  * Toast - Componente de notificación flotante no invasivo
@@ -32,17 +33,11 @@ export default function Toast({ toast, onClose }) {
             : 'bg-indigo-50 text-indigo-600 border border-indigo-200'
         }`}>
           {isSuccess ? (
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-            </svg>
+            <CheckIcon className="w-3.5 h-3.5" />
           ) : isError ? (
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <XMarkIcon className="w-3.5 h-3.5" />
           ) : (
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <InformationCircleIcon className="w-3.5 h-3.5" />
           )}
         </div>
 

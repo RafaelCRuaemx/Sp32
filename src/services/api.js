@@ -139,8 +139,21 @@ export const UsuariosRfidService = {
     });
   },
 
+
+  /**
+   * PATCH /api/usuarios-rfid/:id/
+   * Actualiza los datos de un usuario existente.
+   */
+  actualizarUsuario: async (id, userData) => {
+    return request(`/usuarios-rfid/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(userData),
+    });
+  },
+
   /**
    * DELETE /api/usuarios-rfid/:id/
+
    * Desvincula y elimina la tarjeta RFID del padrón.
    */
   eliminarUsuario: async (id) => {
