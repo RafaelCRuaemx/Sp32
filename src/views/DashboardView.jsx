@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { appConfig, getCardRadiusClass, getCardShadowClass } from '../config/appConfig';
 import AttendanceChart from '../components/AttendanceChart';
 import { DashboardService, BitacoraService } from '../services/api';
-import {ArrowUpIcon} from '@heroicons/react/24/outline';
+import {ArrowUpIcon, ExclamationTriangleIcon} from '@heroicons/react/24/outline';
 
 /**
  * DashboardView - Pantalla 1: Resumen y métricas del sistema RFID
@@ -273,7 +273,7 @@ export default function DashboardView() {
 
       {!isLoading && apiError && (
         <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm">
-          <span className="text-lg leading-none">⚠️</span>
+          <ExclamationTriangleIcon className="w-5 h-5 shrink-0" />
           <div>
             <p className="font-semibold">No se pudo conectar con el servidor</p>
             <p className="text-xs mt-0.5 text-rose-500 font-mono">{apiError}</p>

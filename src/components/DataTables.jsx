@@ -13,7 +13,7 @@ import {
   getTableDensityClass,
   getCardShadowClass,
 } from '../config/appConfig';
-import { ArrowDownTrayIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ArrowDownTrayIcon, XMarkIcon, TableCellsIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 
 const loadExcelJS = () => {
   return new Promise((resolve, reject) => {
@@ -377,13 +377,13 @@ export default function DataTable({
                     onClick={() => setExportFormat('excel')}
                     className={`flex-1 py-2 px-3 rounded-lg border text-xs font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer ${exportFormat === 'excel' ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}
                   >
-                    📊 Excel (.xlsx)
+                    <TableCellsIcon className="w-4 h-4" /> Excel (.xlsx)
                   </button>
                   <button
                     onClick={() => setExportFormat('csv')}
                     className={`flex-1 py-2 px-3 rounded-lg border text-xs font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer ${exportFormat === 'csv' ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}
                   >
-                    📄 CSV (.csv)
+                    <DocumentTextIcon className="w-4 h-4" /> CSV (.csv)
                   </button>
                 </div>
               </div>

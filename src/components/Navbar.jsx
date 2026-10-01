@@ -188,7 +188,7 @@ export default function Navbar({ activeTab, setActiveTab, user = null, onLogout 
                     onClick={() => setMobileMenuOpen(false)}
                     className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer font-bold text-sm"
                   >
-                    ✕
+                    <XMarkIcon className="w-4 h-4" />
                   </button>
                 </div>
 

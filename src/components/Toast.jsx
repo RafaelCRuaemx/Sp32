@@ -50,7 +50,7 @@ export default function Toast({ toast, onClose }) {
           onClick={onClose}
           className="text-slate-400 hover:text-slate-600 text-xs font-bold p-1 cursor-pointer"
         >
-          ✕
+          <XMarkIcon className="w-4 h-4" />
         </button>
       </div>
     </div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { UsuariosRfidService } from '../services/api';
 import DataTable from '../components/DataTables';
 import { appConfig, getCardRadiusClass, getCardShadowClass, playFeedbackSound } from '../config/appConfig';
-import { PlusIcon, TrashIcon, CheckCircleIcon, ExclamationTriangleIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, TrashIcon, CheckCircleIcon, ExclamationTriangleIcon, PencilSquareIcon, SignalIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 /**
  * AltasRfidView - Pantalla 4: Gestión Integral de Usuarios y Padrón Escolar
@@ -450,9 +450,9 @@ export default function AltasRfidView({ showToast }) {
                   </div>
                   <button
                     onClick={handleCloseModal}
-                    className="text-slate-400 hover:text-slate-600 cursor-pointer text-sm font-semibold p-1"
+                    className="text-slate-400 hover:text-slate-600 cursor-pointer p-1"
                   >
-                    ✕
+                    <XMarkIcon className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -609,9 +609,10 @@ export default function AltasRfidView({ showToast }) {
                       <button
                         type="button"
                         onClick={simularCapturaUidEsp32}
-                        className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-mono rounded-lg border border-slate-300 transition-colors whitespace-nowrap cursor-pointer font-medium"
+                        className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-mono rounded-lg border border-slate-300 transition-colors whitespace-nowrap cursor-pointer font-medium flex items-center gap-1.5"
                       >
-                        📡 Leer ESP32
+                        <SignalIcon className="w-3.5 h-3.5" />
+                        Leer ESP32
                       </button>
                     </div>
                     <p className="text-[11px] text-slate-500 font-mono">
@@ -689,9 +690,10 @@ export default function AltasRfidView({ showToast }) {
                   <button
                     type="button"
                     onClick={handleFinalSubmit}
-                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
                   >
-                    {editingUserId ? '✓ Sí, Guardar Cambios' : '✓ Sí, Confirmar y Registrar'}
+                    <CheckIcon className="w-3.5 h-3.5" />
+                    {editingUserId ? 'Sí, Guardar Cambios' : 'Sí, Confirmar y Registrar'}
                   </button>
                 </div>
               </div>
@@ -754,7 +756,7 @@ export default function AltasRfidView({ showToast }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-sm p-5 shadow-2xl space-y-3 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-              <span className="text-xl">📡</span>
+              <SignalIcon className="w-5 h-5 text-slate-600" />
               <h4 className="text-sm font-bold text-slate-900">¿Reemplazar UID Asignado?</h4>
             </div>
 

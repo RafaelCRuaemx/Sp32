@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ExclamationTriangleIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { ExclamationTriangleIcon, CalendarIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import DataTable from '../components/DataTables';
 import { InasistenciasService } from '../services/api';
 import { appConfig, getCardRadiusClass, getCardShadowClass, playFeedbackSound } from '../config/appConfig';
@@ -215,7 +215,10 @@ export default function InasistenciasView({ showToast }) {
                   Justificar
                 </button>
               ) : (
-                <span className="text-xs font-medium text-emerald-600 font-mono">✓ Validado</span>
+                <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 font-mono">
+                  <CheckIcon className="w-3.5 h-3.5" />
+                  Validado
+                </span>
               );
             },
           },
@@ -303,9 +306,9 @@ export default function InasistenciasView({ showToast }) {
                   <h3 className="text-base font-bold text-slate-900">Justificar Inasistencia</h3>
                   <button
                     onClick={handleCloseModal}
-                    className="text-slate-400 hover:text-slate-600 cursor-pointer text-sm font-semibold"
+                    className="text-slate-400 hover:text-slate-600 cursor-pointer p-1"
                   >
-                    ✕
+                    <XMarkIcon className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -408,9 +411,10 @@ export default function InasistenciasView({ showToast }) {
                   )}
                 </div>
 
-                <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
-                  ⚠️ Esta acción marcará la falta como justificada de forma definitiva en la base de datos de asistencia.
-                </p>
+                <div className="flex gap-2 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                  <ExclamationTriangleIcon className="w-4 h-4 shrink-0" />
+                  <p>Esta acción marcará la falta como justificada de forma definitiva en la base de datos de asistencia.</p>
+                </div>
 
                 <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
                   <button
@@ -423,9 +427,10 @@ export default function InasistenciasView({ showToast }) {
                   <button
                     type="button"
                     onClick={handleFinalSubmit}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
                   >
-                    ✓ Sí, Confirmar y Guardar
+                    <CheckIcon className="w-3.5 h-3.5" />
+                    Sí, Confirmar y Guardar
                   </button>
                 </div>
               </div>
