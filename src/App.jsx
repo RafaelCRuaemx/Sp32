@@ -24,7 +24,13 @@ function App() {
           (key) => appConfig.modules[key]?.enabled !== false
         ) || 'dashboard';
 
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('benitto_active_tab') || initialTab;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('benitto_active_tab', activeTab);
+  }, [activeTab]);
   const [toast, setToast] = useState({ show: false, title: '', message: '', type: 'success' });
 
   // Control de sesión y 2FA (Google Authenticator)

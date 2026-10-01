@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { appConfig, getCardShadowClass } from '../config/appConfig';
 import { authService } from '../services/authService';
 import QrEnrollModal from '../components/QrEnrollModal';
+import {ExclamationCircleIcon, ArrowRightIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline';
 
 export default function LoginView({ onLoginSuccess }) {
   const [step, setStep] = useState(1); // 1 = Credenciales, 2 = Desafío 2FA
@@ -139,9 +140,7 @@ export default function LoginView({ onLoginSuccess }) {
         {/* Mensaje de Error */}
         {errorMsg && (
           <div className="mb-5 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
-            <svg className="w-4 h-4 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <ExclamationCircleIcon className="w-4 h-4 shrink-0 text-red-500" />
             <span>{errorMsg}</span>
           </div>
         )}
@@ -189,9 +188,7 @@ export default function LoginView({ onLoginSuccess }) {
               ) : (
                 <>
                   <span>Continuar</span>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
+                  <ArrowRightIcon className="w-4 h-4" />
                 </>
               )}
             </button>

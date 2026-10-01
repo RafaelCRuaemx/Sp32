@@ -1,85 +1,43 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BitacoraService } from '../services/api';
-// [NUEVO] Componente reutilizable DataTable potenciado por TanStack Table (ordenamiento, busqueda y CSV)
 import DataTable from '../components/DataTables';
 import { appConfig, playFeedbackSound } from '../config/appConfig';
+import { PlusIcon, ArrowPathIcon, CalendarIcon } from '@heroicons/react/24/outline';
 
 /**
  * BitacoraView - Pantalla 2: Historial en tiempo real de accesos RFID
- * Conexión lista con Django API (BitacoraService), TanStack Table y notificaciones Toast
+ * Usa BitacoraService (api.js). Con appConfig.api.useMock=true usa datos demo;
+ * con useMock=false se conecta al backend Django REST.
  */
 export default function BitacoraView({ showToast }) {
-  const [logs, setLogs] = useState([
-    {
-      // mock de usuarios para realizar demo de como se veria el sistema
-      id: 1,
-      nombre: 'Valeria Morales Cruz',
-      matricula: '202303001',
-      uid: '9A:4B:C1:20',
-      hora: '21/09/2026 07:44:12 AM',
-      puerta: 'Torniquete 01',
-      estado: 'retardo',
-    },
-    {
-      id: 2,
-      nombre: 'Diego Fernando Ruiz',
-      matricula: '202303014',
-      uid: '3D:88:5A:F2',
-      hora: '21/09/2026 07:29:50 AM',
-      puerta: 'Torniquete 01',
-      estado: 'a_tiempo',
-    },
-    {
-      id: 3,
-      nombre: 'Sofia Elizabeth Lara',
-      matricula: '202303088',
-      uid: 'B1:05:44:E9',
-      hora: '21/09/2026 07:28:10 AM',
-      puerta: 'Torniquete 02',
-      estado: 'a_tiempo',
-    },
-    {
-      id: 4,
-      nombre: 'Carlos Mendoza Rios',
-      matricula: '202303045',
-      uid: 'FF:20:11:09',
-      hora: '21/09/2026 07:15:33 AM',
-      puerta: 'Torniquete 01',
-      estado: 'a_tiempo',
-    },
-    {
-      id: 5,
-      nombre: 'Tarjeta No Registrada',
-      matricula: 'N/A',
-      uid: 'E4:99:A0:71',
-      hora: '21/09/2026 07:10:02 AM',
-      puerta: 'Torniquete 01',
-      estado: 'denegado',
-    },
-    {
-      id: 6,
-      nombre: 'Alejandro Ramos Benitez',
-      matricula: '202303099',
-      uid: '7C:12:F3:A8',
-      hora: '21/09/2026 07:05:22 AM',
-      puerta: 'Torniquete 02',
-      estado: 'a_tiempo',
-    },
-    {
-      id: 7,
-      nombre: 'Mariana Gutierrez Vega',
-      matricula: '202303032',
-      uid: '5B:33:CD:19',
-      hora: '21/09/2026 07:02:40 AM',
-      puerta: 'Torniquete 01',
-      estado: 'a_tiempo',
-    },
-  ]);
-
-  // [NUEVO] Filtro de estado por botones ("Todos", "A tiempo", "Retardo", "Denegado")
+  const [logs, setLogs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError] = useState(null);
   const [statusFilter, setStatusFilter] = useState('todos');
 
-  // [NUEVO] Datos filtrados por estado para alimentar a TanStack Table
+  const getTodayString = () => new Date().toISOString().split('T')[0];
+  const getLastWeekString = () => {
+    const lastWeek = new Date();
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    return lastWeek.toISOString().split('T')[0];
+  };
+
+  const [dateRange, setDateRange] = useState({
+    start: getLastWeekString(),
+    end: getTodayString()
+  });
+
+  // Carga inicial de accesos desde la API (mock o Django)
+  useEffect(() => {
+    setIsLoading(true);
+    setApiError(null);
+    BitacoraService.getAccesos({ start_date: dateRange.start, end_date: dateRange.end })
+      .then((data) => setLogs(Array.isArray(data) ? data : []))
+      .catch((err) => setApiError(err.message || 'Error al cargar accesos'))
+      .finally(() => setIsLoading(false));
+  }, [dateRange.start, dateRange.end]);
+
+  // Datos filtrados por estado para DataTable
   const displayLogs =
     statusFilter === 'todos' ? logs : logs.filter((log) => log.estado === statusFilter);
 
@@ -270,57 +228,93 @@ export default function BitacoraView({ showToast }) {
             onClick={simularEscaneo}
             className="flex items-center justify-center gap-2 px-4 py-2 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-            </svg>
+            <PlusIcon className="w-3.5 h-3.5" />
             Simular Lectura RFID
           </button>
         )}
       </div>
 
-      {/* ============================================================================== */}
-      {/* [NUEVO] RENDERIZADO DEL COMPONENTE DATATABLE (TANSTACK TABLE)                   */}
-      {/* Incluye buscador en vivo, ordenamiento por columnas (clic ▲/▼), paginación    */}
-      {/* interactiva y botón de descarga a Excel/CSV.                                   */}
-      {/* ============================================================================== */}
-      <DataTable
-        data={displayLogs}
-        columns={columns}
-        searchPlaceholder="Buscar por nombre, matrícula o UID..."
-        exportFileName="bitacora_accesos_rfid"
-        extraToolbar={
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 overflow-x-auto">
-              <span className="text-xs font-medium text-slate-500 mr-1">Estado:</span>
-              {filterList.map((filterId) => (
-                <button
-                  key={filterId}
-                  onClick={() => setStatusFilter(filterId)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
-                    statusFilter === filterId
-                      ? 'theme-btn-primary shadow-xs'
-                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  {filterLabels[filterId] || filterId}
-                </button>
-              ))}
-            </div>
+      {/* Controles de Filtro de Fecha */}
+      <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 w-fit">
+        <span className="text-sm font-semibold text-slate-600 flex items-center gap-1">
+          <CalendarIcon className="w-4 h-4 text-slate-500" /> Filtrar periodo:
+        </span>
+        <input 
+          type="date" 
+          value={dateRange.start}
+          onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+          className="text-sm px-2 py-1.5 border border-slate-300 rounded focus:outline-none focus:border-indigo-500 font-mono text-slate-700"
+        />
+        <span className="text-sm text-slate-400 font-medium">al</span>
+        <input 
+          type="date" 
+          value={dateRange.end}
+          onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+          className="text-sm px-2 py-1.5 border border-slate-300 rounded focus:outline-none focus:border-indigo-500 font-mono text-slate-700"
+        />
+      </div>
 
-            {appConfig.layout?.tables?.actionButtonPosition === 'toolbar' && (
-              <button
-                onClick={simularEscaneo}
-                className="flex items-center justify-center gap-2 px-3 py-1.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Simular Lectura
-              </button>
-            )}
+      {/* Indicador de carga */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-16 text-slate-400 gap-3">
+          <ArrowPathIcon className="w-5 h-5 animate-spin" />
+          <span className="text-sm font-medium">Cargando registros...</span>
+        </div>
+      )}
+
+      {/* Mensaje de error de conexión */}
+      {!isLoading && apiError && (
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm">
+          <span className="text-lg leading-none">⚠️</span>
+          <div>
+            <p className="font-semibold">No se pudo conectar con el servidor</p>
+            <p className="text-xs mt-0.5 text-rose-500 font-mono">{apiError}</p>
+            <p className="text-xs mt-1 text-rose-600">Revisa que Django esté corriendo.</p>
           </div>
-        }
-      />
+        </div>
+      )}
+
+      {/* DataTable (TanStack Table) con buscador, ordenamiento, paginación y CSV */}
+      {!isLoading && !apiError && (
+        <DataTable
+          data={displayLogs}
+          columns={columns}
+          searchPlaceholder="Buscar por nombre, matrícula o UID..."
+          exportFileName="bitacora_accesos_rfid"
+          exportTitle="Reporte de Accesos y Asistencia"
+          exportDateRange={`Del ${dateRange.start} al ${dateRange.end}`}
+          extraToolbar={
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1 overflow-x-auto">
+                <span className="text-xs font-medium text-slate-500 mr-1">Estado:</span>
+                {filterList.map((filterId) => (
+                  <button
+                    key={filterId}
+                    onClick={() => setStatusFilter(filterId)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+                      statusFilter === filterId
+                        ? 'theme-btn-primary shadow-xs'
+                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {filterLabels[filterId] || filterId}
+                  </button>
+                ))}
+              </div>
+
+              {appConfig.layout?.tables?.actionButtonPosition === 'toolbar' && (
+                <button
+                  onClick={simularEscaneo}
+                  className="flex items-center justify-center gap-2 px-3 py-1.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+                >
+                  <PlusIcon className="w-3.5 h-3.5" />
+                  Simular Lectura
+                </button>
+              )}
+            </div>
+          }
+        />
+      )}
     </div>
   );
 }

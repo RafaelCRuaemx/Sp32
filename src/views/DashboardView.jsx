@@ -1,54 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { appConfig, getCardRadiusClass, getCardShadowClass } from '../config/appConfig';
 import AttendanceChart from '../components/AttendanceChart';
+import { DashboardService, BitacoraService } from '../services/api';
+import {ArrowUpIcon} from '@heroicons/react/24/outline';
 
 /**
- * DashboardView- Pantalla 1 Resumen y metricas del sisdtema RFID
- * La grafica es renderizada por AttendanceChart (src/components/AttedanceChart.jsx)
- * Tipo activo: appConfig.layout.dashboard.chart.type
-*/
+ * DashboardView - Pantalla 1: Resumen y métricas del sistema RFID
+ * La gráfica es renderizada por AttendanceChart (src/components/AttendanceChart.jsx).
+ * Los datos se obtienen de api.js, de DashboardService y BitacoraService.
+ */
 
 export default function DashboardView() {
-  const [kpis] = useState({
-    totalPadron: 250,
-    asistencias: 218,
-    porcentajeAsistencia: 87.2,
-    retardos: 19,
-    porcentajeRetardos: 7.6,
-    inasistencias: 13,
-    porcentajeInasistencias: 5.2,
-  });
-  const isVespertino = appConfig.dashboardSchedule?.activeShift === 'vespertino';
-  const [hourlyFlow] = useState(
-    isVespertino
-      ? [
-          { hour: '13:30', count: 15, height: '22%' },
-          { hour: '14:00', count: 62, height: '70%' },
-          { hour: '14:15', count: 88, height: '100%' },
-          { hour: '14:30', count: 39, height: '44%' },
-          { hour: '14:45', count: 21, height: '26%' },
-          { hour: '15:00', count: 8, height: '12%' },
-          { hour: '15:30', count: 3, height: '5%' },
-        ]
-      : [
-          { hour: '06:30', count: 12, height: '18%' },
-          { hour: '07:00', count: 58, height: '65%' },
-          { hour: '07:15', count: 95, height: '100%' },
-          { hour: '07:30', count: 42, height: '48%' },
-          { hour: '07:45', count: 19, height: '24%' },
-          { hour: '08:00', count: 6, height: '10%' },
-          { hour: '08:30', count: 4, height: '6%' },
-        ]
-  );
-  const [recentScans] = useState([
-    { id: 1, name: 'Valeria Morales Cruz', matricula: '202303001', uid: '9A:4B:C1:20', time: '07:44:12 AM', status: 'retardo' },
-    { id: 2, name: 'Diego Fernando Ruiz', matricula: '202303014', uid: '3D:88:5A:F2', time: '07:29:50 AM', status: 'a_tiempo' },
-    { id: 3, name: 'Sofia Elizabeth Lara', matricula: '202303088', uid: 'B1:05:44:E9', time: '07:28:10 AM', status: 'a_tiempo' },
-    { id: 4, name: 'Carlos Mendoza Rios', matricula: '202303045', uid: 'FF:20:11:09', time: '07:15:33 AM', status: 'a_tiempo' },
-  ]);
+  const [kpis, setKpis] = useState(null);
+  const [hourlyFlow, setHourlyFlow] = useState([]);
+  const [recentScans, setRecentScans] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError] = useState(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    setApiError(null);
+
+    Promise.all([
+      DashboardService.getResumen(),
+      BitacoraService.getAccesos()
+    ])
+      .then(([dashboardData, accesosData]) => {
+        setKpis({
+          totalPadron: dashboardData.totalPadron,
+          asistencias: dashboardData.asistencias,
+          porcentajeAsistencia: dashboardData.porcentajeAsistencia,
+          retardos: dashboardData.retardos,
+          porcentajeRetardos: dashboardData.porcentajeRetardos,
+          inasistencias: dashboardData.inasistencias,
+          porcentajeInasistencias: dashboardData.porcentajeInasistencias,
+        });
+        setHourlyFlow(dashboardData.flujoHorario || []);
+        
+        // Mapeamos los accesos recientes para coincidir con la estructura de la tabla
+        const recent = accesosData.slice(0, 5).map((acc) => ({
+          id: acc.id,
+          name: acc.nombre,
+          matricula: acc.matricula,
+          uid: acc.uid || acc.uidRfid,
+          time: acc.hora,
+          status: acc.estado,
+        }));
+        setRecentScans(recent);
+      })
+      .catch((err) => setApiError(err.message || 'Error al cargar el dashboard'))
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const targetPercentage = appConfig.dashboardSchedule?.targetAttendancePercentage || 85;
-  const isBelowTarget = kpis.porcentajeAsistencia < targetPercentage;
+  const isBelowTarget = (kpis?.porcentajeAsistencia || 0) < targetPercentage;
 
   const cardRadius = getCardRadiusClass();
   const cardShadow = getCardShadowClass();
@@ -258,7 +263,25 @@ export default function DashboardView() {
           </span>
         </div>
       </div>
-      {widgetsOrder.map((sectionKey) => {
+
+      {isLoading && (
+        <div className="flex items-center justify-center py-16 text-slate-400 gap-3">
+          <ArrowUpIcon className="w-5 h-5 animate-bounce" />
+          <span className="text-sm font-medium">Cargando dashboard...</span>
+        </div>
+      )}
+
+      {!isLoading && apiError && (
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm">
+          <span className="text-lg leading-none">⚠️</span>
+          <div>
+            <p className="font-semibold">No se pudo conectar con el servidor</p>
+            <p className="text-xs mt-0.5 text-rose-500 font-mono">{apiError}</p>
+          </div>
+        </div>
+      )}
+
+      {!isLoading && !apiError && kpis && widgetsOrder.map((sectionKey) => {
         switch (sectionKey) {
           case 'kpis': return renderKpis();
           case 'charts': return renderChartsAndHardware();
