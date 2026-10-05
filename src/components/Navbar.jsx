@@ -414,9 +414,10 @@ export default function Navbar({ activeTab, setActiveTab, user = null, onLogout 
                 onClick={() => setActiveTab(item.id)}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-xl sm:rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                   isActive
-                    ? 'theme-btn-primary shadow-xs'
+                    ? 'theme-btn-primary relative z-10'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                 }`}
+                style={isActive ? { boxShadow: '0 0 14px 2px var(--color-accent)' } : undefined}
               >
                 {item.icon}
                 <span>{item.label}</span>
@@ -479,9 +480,10 @@ export default function Navbar({ activeTab, setActiveTab, user = null, onLogout 
                     onClick={() => setActiveTab(item.id)}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                       isActive
-                        ? 'theme-btn-primary shadow-xs font-semibold'
+                        ? 'theme-btn-primary relative z-10 font-semibold'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                     }`}
+                    style={isActive ? { boxShadow: '0 0 14px 2px var(--color-accent)' } : undefined}
                   >
                     {item.icon}
                     <span className="hidden md:inline">{item.label}</span>
@@ -538,3 +540,4 @@ export default function Navbar({ activeTab, setActiveTab, user = null, onLogout 
     </header>
   );
 }
+// Force Vite HMR reload Thu Oct  1 16:56:26 CST 2026

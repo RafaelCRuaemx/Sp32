@@ -29,7 +29,7 @@ export const appConfig = {
     // 'top'                  -> Barra horizontal superior clásica
     // 'sidebar' o 'slidebar' -> Menú vertical lateral estilo Dashboard (izquierda o derecha)
     // 'bottom' o 'dock'      -> Barra flotante inferior estilo Dock de macOS / Móvil
-    navigationStyle: 'slidebar',
+    navigationStyle: 'dock',  // 'top', | 'sidebar', | 'slidebar', | 'bottom', | 'dock',
 
     // ¿Qué pantalla quieres que se abra por defecto al entrar al sistema?
     // Opciones: 'dashboard' | 'bitacora' | 'inasistencias' | 'altas'
@@ -704,20 +704,20 @@ export function getSidebarClasses() {
   const borderClass = position === 'right' ? 'border-l' : 'border-r';
 
   let themeClasses = `bg-white ${borderClass} border-slate-200/90 text-slate-800`;
-  let navActiveClasses = 'theme-btn-primary shadow-xs font-semibold';
+  let navActiveClasses = 'theme-btn-primary shadow-[0_0_12px_2px_var(--color-accent)] relative z-10 font-semibold';
   let navInactiveClasses = 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80';
   let cardBgClasses = 'bg-slate-50 border-slate-200/80 text-slate-800';
   let headerBorderClasses = 'border-slate-100';
 
   if (theme === 'dark') {
     themeClasses = `bg-slate-900 ${borderClass} border-slate-800 text-slate-100`;
-    navActiveClasses = 'theme-btn-primary text-white font-semibold shadow-md';
+    navActiveClasses = 'theme-btn-primary shadow-[0_0_12px_2px_var(--color-accent)] relative z-10 text-white font-semibold';
     navInactiveClasses = 'text-slate-400 hover:text-white hover:bg-slate-800/80';
     cardBgClasses = 'bg-slate-800/90 border-slate-700 text-slate-100';
     headerBorderClasses = 'border-slate-800';
   } else if (theme === 'brand') {
     themeClasses = `bg-[var(--color-primary)] ${borderClass} border-black/10 text-white`;
-    navActiveClasses = 'bg-white/20 text-white font-bold backdrop-blur-xs shadow-xs';
+    navActiveClasses = 'bg-white/20 text-white font-bold backdrop-blur-xs shadow-[0_0_12px_2px_var(--color-accent)] relative z-10';
     navInactiveClasses = 'text-white/80 hover:text-white hover:bg-white/10';
     cardBgClasses = 'bg-black/15 border-white/10 text-white';
     headerBorderClasses = 'border-white/15';
