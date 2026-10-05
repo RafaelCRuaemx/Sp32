@@ -29,7 +29,7 @@ export const appConfig = {
     // 'top'                  -> Barra horizontal superior clásica
     // 'sidebar' o 'slidebar' -> Menú vertical lateral estilo Dashboard (izquierda o derecha)
     // 'bottom' o 'dock'      -> Barra flotante inferior estilo Dock de macOS / Móvil
-    navigationStyle: 'slidebar',
+    navigationStyle: 'dock',  // 'top', | 'sidebar', | 'slidebar', | 'bottom', | 'dock',
 
     // ¿Qué pantalla quieres que se abra por defecto al entrar al sistema?
     // Opciones: 'dashboard' | 'bitacora' | 'inasistencias' | 'altas'
@@ -93,7 +93,7 @@ export const appConfig = {
         // 'step'            -> Línea escalonada de aforo acumulado
         // 'gradient-bars'   -> Barras modernas con degradado vertical
         // 'bars'            -> Barras verticales tradicionales
-        type: 'gradient-bars',
+        type: 'donut',
 
         // Paleta de color:
         // 'theme'    -> Sincronizado automáticamente con el color institucional activo
@@ -285,6 +285,31 @@ export const appConfig = {
       mockMode: true,                // true = modo prueba en navegador; false = conecta con Django
       issuerName: 'Control Escolar RFID',
     },
+  },
+
+  // ================================================================================
+  // 11.5 CONEXIÓN CON EL BACKEND (API DJANGO)
+  // ================================================================================
+  // ┌─────────────────────────────────────────────────────────────────────────────┐
+  // │  useMock: true   → El sistema usa datos de demostración internos.           │
+  // │                    Funciona sin Django, ideal para desarrollo del frontend.  │
+  // │                                                                             │
+  // │  useMock: false  → El sistema consulta el servidor Django REST.             │
+  // │                    Requiere que Django esté corriendo y la URL configurada   │
+  // │                    en el archivo .env (VITE_API_URL=http://127.0.0.1:8000/api)│
+  // └─────────────────────────────────────────────────────────────────────────────┘
+  api: {
+    useMock: false,   // ← CAMBIA A false CUANDO DJANGO ESTÉ LISTO
+
+    // Tiempo máximo de espera para respuestas del servidor (ms)
+    // Si Django tarda más que esto, se mostrará un error de conexión.
+    timeoutMs: 8000,
+
+    // ¿Mostrar un indicador de "Cargando..." mientras se consulta Django?
+    showLoadingSpinner: true,
+
+    // ¿Reintentar automáticamente si falla la conexión?
+    retryOnError: false,
   },
 
   // ================================================================================
@@ -521,7 +546,7 @@ export const appConfig = {
     requireEmail: false,         // ¿El correo es obligatorio para guardar? (false = opcional)
     requirePhone: true,          // ¿El teléfono es obligatorio para guardar?
     defaultRole: 'Estudiante',   // Rol preseleccionado ('Estudiante', 'Docente', 'Administrativo')
-    autoUppercaseName: true,     // Convierte automáticamente el nombre a MAYÚSCULAS
+    autoUppercaseName: false,     // Convierte automáticamente el nombre a MAYÚSCULAS
   },
 
   // ================================================================================
@@ -679,20 +704,20 @@ export function getSidebarClasses() {
   const borderClass = position === 'right' ? 'border-l' : 'border-r';
 
   let themeClasses = `bg-white ${borderClass} border-slate-200/90 text-slate-800`;
-  let navActiveClasses = 'theme-btn-primary shadow-xs font-semibold';
+  let navActiveClasses = 'theme-btn-primary shadow-[0_0_12px_2px_var(--color-accent)] relative z-10 font-semibold';
   let navInactiveClasses = 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80';
   let cardBgClasses = 'bg-slate-50 border-slate-200/80 text-slate-800';
   let headerBorderClasses = 'border-slate-100';
 
   if (theme === 'dark') {
     themeClasses = `bg-slate-900 ${borderClass} border-slate-800 text-slate-100`;
-    navActiveClasses = 'theme-btn-primary text-white font-semibold shadow-md';
+    navActiveClasses = 'theme-btn-primary shadow-[0_0_12px_2px_var(--color-accent)] relative z-10 text-white font-semibold';
     navInactiveClasses = 'text-slate-400 hover:text-white hover:bg-slate-800/80';
     cardBgClasses = 'bg-slate-800/90 border-slate-700 text-slate-100';
     headerBorderClasses = 'border-slate-800';
   } else if (theme === 'brand') {
     themeClasses = `bg-[var(--color-primary)] ${borderClass} border-black/10 text-white`;
-    navActiveClasses = 'bg-white/20 text-white font-bold backdrop-blur-xs shadow-xs';
+    navActiveClasses = 'bg-white/20 text-white font-bold backdrop-blur-xs shadow-[0_0_12px_2px_var(--color-accent)] relative z-10';
     navInactiveClasses = 'text-white/80 hover:text-white hover:bg-white/10';
     cardBgClasses = 'bg-black/15 border-white/10 text-white';
     headerBorderClasses = 'border-white/15';

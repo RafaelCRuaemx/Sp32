@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ExclamationTriangleIcon, CalendarIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import DataTable from '../components/DataTables';
 import { InasistenciasService } from '../services/api';
 import { appConfig, getCardRadiusClass, getCardShadowClass, playFeedbackSound } from '../config/appConfig';
@@ -10,64 +11,30 @@ import { appConfig, getCardRadiusClass, getCardShadowClass, playFeedbackSound } 
 export default function InasistenciasView({ showToast }) {
   const cardRadius = getCardRadiusClass();
   const cardShadow = getCardShadowClass();
-  const [inasistencias, setInasistencias] = useState([
-    {
-      //mock de usuarios para realziar demo de como se veria el sistema
-      id: 101,
-      nombre: 'Mateo Hernandez Nava',
-      matricula: '202303022',
-      grupo: '6to - Sistemas A',
-      fecha: '2026-09-21',
-      estado: 'injustificada',
-      motivoJustificacion: null,
-      folio: null,
-      tutorTelefono: '55-1234-5678',
-    },
-    {
-      id: 102,
-      nombre: 'Fernanda Castillo Montes',
-      matricula: '202303057',
-      grupo: '6to - Electrónica B',
-      fecha: '2026-09-21',
-      estado: 'injustificada',
-      motivoJustificacion: null,
-      folio: null,
-      tutorTelefono: '55-8765-4321',
-    },
-    {
-      id: 103,
-      nombre: 'Rodrigo Albarrán Peña',
-      matricula: '202303081',
-      grupo: '4to - Mecatrónica',
-      fecha: '2026-09-21',
-      estado: 'justificada',
-      motivoJustificacion: 'Cita Médica IMSS',
-      folio: 'MED-9021',
-      tutorTelefono: '55-3344-5566',
-    },
-    {
-      id: 104,
-      nombre: 'Andrea Paulina Salgado',
-      matricula: '202303112',
-      grupo: '6to - Sistemas A',
-      fecha: '2026-09-21',
-      estado: 'injustificada',
-      motivoJustificacion: null,
-      folio: null,
-      tutorTelefono: '55-9988-7766',
-    },
-    {
-      id: 105,
-      nombre: 'Emiliano Zapata Godínez',
-      matricula: '202303120',
-      grupo: '2do - Tronco Común',
-      fecha: '2026-09-21',
-      estado: 'injustificada',
-      motivoJustificacion: null,
-      folio: null,
-      tutorTelefono: '55-4422-1100',
-    },
-  ]);
+  const getTodayString = () => new Date().toISOString().split('T')[0];
+  const getLastWeekString = () => {
+    const lastWeek = new Date();
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    return lastWeek.toISOString().split('T')[0];
+  };
+
+  const [dateRange, setDateRange] = useState({
+    start: getLastWeekString(),
+    end: getTodayString()
+  });
+
+  const [inasistencias, setInasistencias] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError] = useState(null);
+
+  React.useEffect(() => {
+    setIsLoading(true);
+    setApiError(null);
+    InasistenciasService.getInasistencias({ start_date: dateRange.start, end_date: dateRange.end })
+      .then((data) => setInasistencias(Array.isArray(data) ? data : []))
+      .catch((err) => setApiError(err.message || 'Error de conexión con el servidor'))
+      .finally(() => setIsLoading(false));
+  }, [dateRange.start, dateRange.end]);
 
   const defaultReason = appConfig.justificationsForm?.defaultReason || appConfig.justifications[0] || 'Incapacidad Médica';
   const [filterEstado, setFilterEstado] = useState('todos');
@@ -120,10 +87,15 @@ export default function InasistenciasView({ showToast }) {
   const handleFinalSubmit = async () => {
     if (!selectedItem) return;
 
+    // El usuario_id real viene del campo 'usuario_id' del objeto (nuevo) o del 'id' (dato viejo)
+    const usuarioId = selectedItem.usuario_id || selectedItem.id;
+
     const payload = {
+      fecha: selectedItem.fecha,
       motivo,
       folio: folio || 'S/F',
       observaciones,
+      autorizado_por: 'Administrador Web' // Pendiente a reemplazar por login real
     };
 
     setInasistencias((prev) =>
@@ -140,7 +112,7 @@ export default function InasistenciasView({ showToast }) {
     );
 
     try {
-      await InasistenciasService.justificar(selectedItem.id, payload).catch(() => {});
+      await InasistenciasService.justificar(usuarioId, payload).catch(() => {});
     } catch {
       // Backend offline
     }
@@ -169,18 +141,20 @@ export default function InasistenciasView({ showToast }) {
   const columns = [
     {
       accessorKey: 'nombre',
-      header: 'Alumno / Matrícula',
+      header: 'Alumno',
       cell: (info) => (
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-700 font-mono shrink-0">
             {info.getValue().substring(0, 2).toUpperCase()}
           </div>
-          <div>
-            <div className="font-semibold text-slate-900">{info.getValue()}</div>
-            <div className="text-[11px] font-mono text-slate-500">{info.row.original.matricula}</div>
-          </div>
+          <span className="font-semibold text-slate-900">{info.getValue()}</span>
         </div>
       ),
+    },
+    {
+      accessorKey: 'matricula',
+      header: 'Matrícula',
+      cell: (info) => <span className="font-mono text-slate-600 font-medium">{info.getValue()}</span>,
     },
     {
       accessorKey: 'grupo',
@@ -193,9 +167,13 @@ export default function InasistenciasView({ showToast }) {
       cell: (info) => <span className="font-mono text-slate-500">{info.getValue()}</span>,
     },
     {
-      accessorKey: 'tutorTelefono',
+      id: 'contacto',
       header: 'Contacto Tutor',
-      cell: (info) => <span className="font-mono text-slate-600">{formatPhoneNumber(info.getValue())}</span>,
+      cell: (info) => {
+        const item = info.row.original;
+        const phone = item.tutorTelefono || item.telefono || item.telefono_tutor || item.contacto;
+        return <span className="font-mono text-slate-600">{formatPhoneNumber(phone)}</span>;
+      }
     },
     {
       accessorKey: 'estado',
@@ -237,7 +215,10 @@ export default function InasistenciasView({ showToast }) {
                   Justificar
                 </button>
               ) : (
-                <span className="text-xs font-medium text-emerald-600 font-mono">✓ Validado</span>
+                <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 font-mono">
+                  <CheckIcon className="w-3.5 h-3.5" />
+                  Validado
+                </span>
               );
             },
           },
@@ -261,6 +242,25 @@ export default function InasistenciasView({ showToast }) {
           </span>
         </div>
       </div>
+      {/* Controles de Filtro de Fecha */}
+      <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 w-fit">
+        <span className="text-sm font-semibold text-slate-600 flex items-center gap-1">
+          <CalendarIcon className="w-4 h-4 text-slate-500" /> Filtrar periodo:
+        </span>
+        <input 
+          type="date" 
+          value={dateRange.start}
+          onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+          className="text-sm px-2 py-1.5 border border-slate-300 rounded focus:outline-none focus:border-indigo-500 font-mono text-slate-700"
+        />
+        <span className="text-sm text-slate-400 font-medium">al</span>
+        <input 
+          type="date" 
+          value={dateRange.end}
+          onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+          className="text-sm px-2 py-1.5 border border-slate-300 rounded focus:outline-none focus:border-indigo-500 font-mono text-slate-700"
+        />
+      </div>
 
       {/* Componente DataTable con TanStack Table */}
       <DataTable
@@ -268,6 +268,8 @@ export default function InasistenciasView({ showToast }) {
         columns={columns}
         searchPlaceholder="Buscar por alumno, matrícula o grupo..."
         exportFileName="reporte_inasistencias_rfid"
+          exportTitle="Reporte de Inasistencias"
+          exportDateRange={`Del ${dateRange.start} al ${dateRange.end}`}
         extraToolbar={
           <div className="flex items-center gap-1.5 overflow-x-auto">
             <span className="text-xs font-medium text-slate-500 mr-1">Filtrar:</span>
@@ -304,9 +306,9 @@ export default function InasistenciasView({ showToast }) {
                   <h3 className="text-base font-bold text-slate-900">Justificar Inasistencia</h3>
                   <button
                     onClick={handleCloseModal}
-                    className="text-slate-400 hover:text-slate-600 cursor-pointer text-sm font-semibold"
+                    className="text-slate-400 hover:text-slate-600 cursor-pointer p-1"
                   >
-                    ✕
+                    <XMarkIcon className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -380,9 +382,7 @@ export default function InasistenciasView({ showToast }) {
               <div className="space-y-4">
                 <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                   <div className="w-9 h-9 rounded-full bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
+                    <ExclamationTriangleIcon className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-slate-900">¿Confirmar Justificación?</h3>
@@ -411,9 +411,10 @@ export default function InasistenciasView({ showToast }) {
                   )}
                 </div>
 
-                <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
-                  ⚠️ Esta acción marcará la falta como justificada de forma definitiva en la base de datos de asistencia.
-                </p>
+                <div className="flex gap-2 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                  <ExclamationTriangleIcon className="w-4 h-4 shrink-0" />
+                  <p>Esta acción marcará la falta como justificada de forma definitiva en la base de datos de asistencia.</p>
+                </div>
 
                 <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
                   <button
@@ -426,9 +427,10 @@ export default function InasistenciasView({ showToast }) {
                   <button
                     type="button"
                     onClick={handleFinalSubmit}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
                   >
-                    ✓ Sí, Confirmar y Guardar
+                    <CheckIcon className="w-3.5 h-3.5" />
+                    Sí, Confirmar y Guardar
                   </button>
                 </div>
               </div>

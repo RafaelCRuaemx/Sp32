@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { UsuariosRfidService } from '../services/api';
 import DataTable from '../components/DataTables';
 import { appConfig, getCardRadiusClass, getCardShadowClass, playFeedbackSound } from '../config/appConfig';
+import { PlusIcon, TrashIcon, CheckCircleIcon, ExclamationTriangleIcon, PencilSquareIcon, SignalIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 /**
  * AltasRfidView - Pantalla 4: Gestión Integral de Usuarios y Padrón Escolar
@@ -10,81 +11,25 @@ import { appConfig, getCardRadiusClass, getCardShadowClass, playFeedbackSound } 
 export default function AltasRfidView({ showToast }) {
   const cardRadius = getCardRadiusClass();
   const cardShadow = getCardShadowClass();
-  const [usuarios, setUsuarios] = useState([
-    //mock de usuarios apra realizar demo de como se veria el sistema
-    {
-      id: 1,
-      nombre: 'Valeria Morales Cruz',
-      matricula: '202303001',
-      correo: 'valeria.morales@benitto.edu.mx',
-      telefono: '55-1234-5678',
-      rol: 'Estudiante',
-      area: 'Ing. en Sistemas Computacionales',
-      uidRfid: '9A:4B:C1:20',
-      fechaAlta: '2026-09-01',
-      activo: true,
-    },
-    {
-      id: 2,
-      nombre: 'Diego Fernando Ruiz',
-      matricula: '202303014',
-      correo: 'diego.ruiz@benitto.edu.mx',
-      telefono: '55-2345-6789',
-      rol: 'Estudiante',
-      area: 'Ing. Mecatrónica',
-      uidRfid: '3D:88:5A:F2',
-      fechaAlta: '2026-09-01',
-      activo: true,
-    },
-    {
-      id: 3,
-      nombre: 'Ing. Roberto Mendoza Peña',
-      matricula: 'DOC-8820',
-      correo: 'roberto.mendoza@benitto.edu.mx',
-      telefono: '55-8899-0011',
-      rol: 'Docente',
-      area: 'Docencia y Laboratorios',
-      uidRfid: 'FF:20:11:09',
-      fechaAlta: '2026-08-15',
-      activo: true,
-    },
-    {
-      id: 4,
-      nombre: 'Sofia Elizabeth Lara',
-      matricula: '202303088',
-      correo: 'sofia.lara@benitto.edu.mx',
-      telefono: '55-3456-7890',
-      rol: 'Estudiante',
-      area: 'Ing. Electrónica',
-      uidRfid: 'B1:05:44:E9',
-      fechaAlta: '2026-09-02',
-      activo: true,
-    },
-    {
-      id: 5,
-      nombre: 'Lic. Claudia Nava Sánchez',
-      matricula: 'ADM-4012',
-      correo: 'claudia.nava@benitto.edu.mx',
-      telefono: '55-7766-5544',
-      rol: 'Administrativo',
-      area: 'Administración Escolar',
-      uidRfid: '7C:12:F3:A8',
-      fechaAlta: '2026-08-10',
-      activo: true,
-    },
-    {
-      id: 6,
-      nombre: 'Mariana Gutierrez Vega',
-      matricula: '202303032',
-      correo: 'mariana.gutierrez@benitto.edu.mx',
-      telefono: '55-4567-8901',
-      rol: 'Estudiante',
-      area: 'Ing. en Sistemas Computacionales',
-      uidRfid: '5B:33:CD:19',
-      fechaAlta: '2026-09-03',
-      activo: true,
-    },
-  ]);
+  const [usuarios, setUsuarios] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError] = useState(null);
+  const [catalogos, setCatalogos] = useState({ roles: [], carreras: [], semestres: [], turnos: [] });
+
+  React.useEffect(() => {
+    setIsLoading(true);
+    setApiError(null);
+    Promise.all([
+      UsuariosRfidService.getUsuarios(),
+      UsuariosRfidService.getCatalogos()
+    ])
+      .then(([usuariosData, catalogosData]) => {
+        setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
+        setCatalogos(catalogosData || { roles: [], carreras: [], semestres: [], turnos: [] });
+      })
+      .catch((err) => setApiError(err.message || 'Error de conexión con el servidor'))
+      .finally(() => setIsLoading(false));
+  }, []);
 
   // Control de Modal y Edición
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -120,10 +65,12 @@ export default function AltasRfidView({ showToast }) {
     setFormData({
       nombre: usuario.nombre,
       matricula: usuario.matricula,
-      correo: usuario.correo,
-      telefono: usuario.telefono,
-      rol: usuario.rol,
-      area: usuario.area,
+      correo: usuario.correo || '',
+      telefono: usuario.telefono || '',
+      rol: usuario.rol || '',
+      area: usuario.carrera || '',
+      semestre: usuario.semestre || '',
+      turno: usuario.turno || '',
       uidRfid: usuario.uidRfid,
     });
     setIsConfirmingSave(false);
@@ -159,6 +106,7 @@ export default function AltasRfidView({ showToast }) {
     ).join(':');
 
     // Si ya existe un UID previo, pedir confirmación antes de sobrescribir
+
     if (formData.uidRfid && formData.uidRfid.trim() !== '') {
       setPendingUidOverwrite(hex);
       playFeedbackSound('warning');
@@ -207,51 +155,40 @@ export default function AltasRfidView({ showToast }) {
 
   // PASO 2 DE GUARDADO: Confirmación final
   const handleFinalSubmit = async () => {
-    if (editingUserId) {
-      setUsuarios((prev) =>
-        prev.map((u) =>
-          u.id === editingUserId
-            ? {
-                ...u,
-                nombre: formData.nombre.trim(),
-                matricula: formData.matricula.trim().toUpperCase(),
-                correo: formData.correo.trim() || `${formData.matricula.toLowerCase()}@benitto.edu.mx`,
-                telefono: formData.telefono.trim() || 'No especificado',
-                rol: formData.rol,
-                area: formData.area.trim() || 'General',
-                uidRfid: formData.uidRfid.trim().toUpperCase(),
-              }
-            : u
-        )
-      );
-
-      if (showToast) {
-        showToast('Usuario Actualizado', `Los datos de ${formData.nombre} fueron guardados.`, 'success');
-      }
-    } else {
-      const nuevoUsuario = {
-        id: Date.now(),
+    const payload = {
         nombre: formData.nombre.trim(),
         matricula: formData.matricula.trim().toUpperCase(),
-        correo: formData.correo.trim() || `${formData.matricula.toLowerCase()}@benitto.edu.mx`,
-        telefono: formData.telefono.trim() || 'No especificado',
-        rol: formData.rol,
-        area: formData.area.trim() || 'General',
+        correo: formData.correo?.trim() || '',
+        telefono: formData.telefono?.trim() || '',
+        rol: formData.rol ? parseInt(formData.rol) : null,
+        carrera: formData.area ? parseInt(formData.area) : null,
+        semestre: formData.semestre ? parseInt(formData.semestre) : null,
+        turno: formData.turno ? parseInt(formData.turno) : null,
         uidRfid: formData.uidRfid.trim().toUpperCase(),
-        fechaAlta: new Date().toISOString().split('T')[0],
         activo: true,
-      };
+    };
 
-      setUsuarios((prev) => [nuevoUsuario, ...prev]);
-
+    if (editingUserId) {
       try {
-        await UsuariosRfidService.registrarUsuario(nuevoUsuario).catch(() => {});
-      } catch {
-        // Backend offline
+        const updatedUser = await UsuariosRfidService.actualizarUsuario(editingUserId, payload);
+        setUsuarios((prev) => prev.map((u) => (u.id === editingUserId ? updatedUser : u)));
+        if (showToast) showToast('Usuario Actualizado', `Los datos de ${payload.nombre} fueron guardados.`, 'success');
+      } catch (err) {
+        setApiError(err.message || 'Error al actualizar');
+        if (showToast) showToast('Error', err.message || 'Error al guardar', 'error');
+        setIsConfirmingSave(false);
+        return;
       }
-
-      if (showToast) {
-        showToast('Usuario Registrado', `${nuevoUsuario.nombre} ha sido dado de alta exitosamente.`, 'success');
+    } else {
+      try {
+        const createdUser = await UsuariosRfidService.registrarUsuario(payload);
+        setUsuarios((prev) => [createdUser, ...prev]);
+        if (showToast) showToast('Usuario Registrado', `${payload.nombre} ha sido dado de alta exitosamente.`, 'success');
+      } catch (err) {
+        setApiError(err.message || 'Error al registrar');
+        if (showToast) showToast('Error', err.message || 'Error al guardar', 'error');
+        setIsConfirmingSave(false);
+        return;
       }
     }
 
@@ -331,14 +268,17 @@ export default function AltasRfidView({ showToast }) {
     {
       accessorKey: 'rol',
       header: 'Rol y Carrera / Área',
-      cell: (info) => (
+      cell: (info) => {
+        const rolTexto = info.row.original.rol_nombre || 'N/A';
+        const carreraTexto = info.row.original.carrera_nombre || 'General';
+        return (
         <div>
-          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${getRolBadge(info.getValue())}`}>
-            {info.getValue()}
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${getRolBadge(rolTexto)}`}>
+            {rolTexto}
           </span>
-          <p className="text-[11px] text-slate-500 mt-1">{info.row.original.area}</p>
+          <p className="text-[11px] text-slate-500 mt-1">{carreraTexto}</p>
         </div>
-      ),
+      )},
     },
     ...((showEmail || showPhone)
       ? [
@@ -389,9 +329,7 @@ export default function AltasRfidView({ showToast }) {
               onClick={() => handleOpenEditModal(u)}
               className="px-2.5 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium shadow-xs transition-colors cursor-pointer flex items-center gap-1"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
+              <PencilSquareIcon className="w-3.5 h-3.5" />
               Editar
             </button>
             <button
@@ -399,9 +337,7 @@ export default function AltasRfidView({ showToast }) {
               title="Eliminar usuario (con confirmación)"
               className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
+              <TrashIcon className="w-3.5 h-3.5" />
             </button>
           </div>
         );
@@ -425,9 +361,7 @@ export default function AltasRfidView({ showToast }) {
             onClick={handleOpenCreateModal}
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-            </svg>
+            <PlusIcon className="w-4 h-4" />
             Crear Usuario
           </button>
         )}
@@ -487,9 +421,7 @@ export default function AltasRfidView({ showToast }) {
                 onClick={handleOpenCreateModal}
                 className="inline-flex items-center justify-center gap-2 px-3.5 py-1.5 theme-btn-primary text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                </svg>
+                <PlusIcon className="w-4 h-4" />
                 Crear Usuario
               </button>
             )}
@@ -518,9 +450,9 @@ export default function AltasRfidView({ showToast }) {
                   </div>
                   <button
                     onClick={handleCloseModal}
-                    className="text-slate-400 hover:text-slate-600 cursor-pointer text-sm font-semibold p-1"
+                    className="text-slate-400 hover:text-slate-600 cursor-pointer p-1"
                   >
-                    ✕
+                    <XMarkIcon className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -564,8 +496,9 @@ export default function AltasRfidView({ showToast }) {
                         onChange={handleChange}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800"
                       >
-                        {appConfig.academic.roles.map((r) => (
-                          <option key={r} value={r}>{r}</option>
+                        <option value="">Seleccione un rol...</option>
+                        {catalogos.roles.map((r) => (
+                          <option key={r.id} value={r.id}>{r.nombre}</option>
                         ))}
                       </select>
                     </div>
@@ -597,7 +530,7 @@ export default function AltasRfidView({ showToast }) {
                     </div>
                   </div>
 
-                  <div className={formData.rol === 'Estudiante' && appConfig.academic?.groups?.length > 0 ? 'grid grid-cols-1 sm:grid-cols-2 gap-3' : ''}>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1">Carrera / Área Académica</label>
                       <select
@@ -606,8 +539,37 @@ export default function AltasRfidView({ showToast }) {
                         onChange={handleChange}
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800"
                       >
-                        {appConfig.academic.areas.map((a) => (
-                          <option key={a} value={a}>{a}</option>
+                        <option value="">Sin área/carrera...</option>
+                        {catalogos.carreras.map((c) => (
+                          <option key={c.id} value={c.id}>{c.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Semestre</label>
+                      <select
+                        name="semestre"
+                        value={formData.semestre}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800"
+                      >
+                        <option value="">N/A</option>
+                        {catalogos.semestres.map((s) => (
+                          <option key={s.id} value={s.id}>{s.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Turno</label>
+                      <select
+                        name="turno"
+                        value={formData.turno}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800"
+                      >
+                        <option value="">N/A</option>
+                        {catalogos.turnos.map((t) => (
+                          <option key={t.id} value={t.id}>{t.nombre}</option>
                         ))}
                       </select>
                     </div>
@@ -647,9 +609,10 @@ export default function AltasRfidView({ showToast }) {
                       <button
                         type="button"
                         onClick={simularCapturaUidEsp32}
-                        className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-mono rounded-lg border border-slate-300 transition-colors whitespace-nowrap cursor-pointer font-medium"
+                        className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-mono rounded-lg border border-slate-300 transition-colors whitespace-nowrap cursor-pointer font-medium flex items-center gap-1.5"
                       >
-                        📡 Leer ESP32
+                        <SignalIcon className="w-3.5 h-3.5" />
+                        Leer ESP32
                       </button>
                     </div>
                     <p className="text-[11px] text-slate-500 font-mono">
@@ -679,9 +642,7 @@ export default function AltasRfidView({ showToast }) {
               <div className="space-y-4">
                 <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                   <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <CheckCircleIcon className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-slate-900">
@@ -729,9 +690,10 @@ export default function AltasRfidView({ showToast }) {
                   <button
                     type="button"
                     onClick={handleFinalSubmit}
-                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
                   >
-                    {editingUserId ? '✓ Sí, Guardar Cambios' : '✓ Sí, Confirmar y Registrar'}
+                    <CheckIcon className="w-3.5 h-3.5" />
+                    {editingUserId ? 'Sí, Guardar Cambios' : 'Sí, Confirmar y Registrar'}
                   </button>
                 </div>
               </div>
@@ -749,9 +711,7 @@ export default function AltasRfidView({ showToast }) {
           <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
               <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <TrashIcon className="w-5 h-5" />
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900">¿Dar de baja a este usuario?</h3>
@@ -796,7 +756,7 @@ export default function AltasRfidView({ showToast }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-sm p-5 shadow-2xl space-y-3 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-              <span className="text-xl">📡</span>
+              <SignalIcon className="w-5 h-5 text-slate-600" />
               <h4 className="text-sm font-bold text-slate-900">¿Reemplazar UID Asignado?</h4>
             </div>
 

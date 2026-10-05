@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { authService } from '../services/authService';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 export default function QrEnrollModal({ email, isOpen, onClose }) {
   const [copied, setCopied] = useState(false);
@@ -29,8 +30,8 @@ export default function QrEnrollModal({ email, isOpen, onClose }) {
               <p className="text-xs text-slate-500">Escanea el código con la app en tu celular</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 text-lg font-bold cursor-pointer">
-            ✕
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+            <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
 

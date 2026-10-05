@@ -6,6 +6,7 @@ import BitacoraView from './views/BitacoraView';
 import InasistenciasView from './views/InasistenciasView';
 import AltasRfidView from './views/AltasRfidView';
 import { appConfig, getActiveTheme, getAppBackgroundColor, isSidebarLayout, isBottomNavLayout } from './config/appConfig';
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import './App.css';
 import LoginView from './views/LoginView';
 import { authService } from './services/authService';
@@ -24,7 +25,13 @@ function App() {
           (key) => appConfig.modules[key]?.enabled !== false
         ) || 'dashboard';
 
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('benitto_active_tab') || initialTab;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('benitto_active_tab', activeTab);
+  }, [activeTab]);
   const [toast, setToast] = useState({ show: false, title: '', message: '', type: 'success' });
 
   // Control de sesión y 2FA (Google Authenticator)
@@ -196,7 +203,8 @@ function App() {
       {appConfig.telemetry?.offlineAlertBanner && String(appConfig.hardware?.status || '').toLowerCase() !== 'online' && (
         <div className="bg-amber-600 text-white text-xs font-semibold px-4 py-2 flex items-center justify-between shadow-xs sticky top-0 z-50">
           <div className="flex items-center gap-2 max-w-7xl mx-auto w-full">
-            <span className="font-bold">⚠️ ALERTA DE TELEMETRÍA:</span>
+            <ExclamationTriangleIcon className="w-4 h-4 shrink-0" />
+            <span className="font-bold">ALERTA DE TELEMETRÍA:</span>
             <span>
               El lector {appConfig.hardware.label} ({appConfig.hardware.ip}) se encuentra {appConfig.hardware.status}. Verifique la conexión WiFi del hardware.
             </span>

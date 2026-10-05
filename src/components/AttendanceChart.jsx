@@ -66,15 +66,15 @@ const getPrimaryHex = () => {
   }, '');
   const stepAreaD = `${stepD} L ${svgPoints[svgPoints.length - 1]?.x || svgWidth},${svgHeight - 10} L ${svgPoints[0]?.x || 0},${svgHeight - 10} Z`;
   const circ = 2 * Math.PI * 62;
-  const pctAsist = Math.max(0, Math.min(100, kpis.porcentajeAsistencia || 82.5));
-  const pctRet   = Math.max(0, Math.min(100, kpis.porcentajeRetardos    || 10.3));
-  const pctInas  = Math.max(0, Math.min(100, kpis.porcentajeInasistencias || 7.2));
+  const pctAsist = Math.max(0, Math.min(100, kpis.porcentajeAsistencia ?? 0));
+  const pctRet   = Math.max(0, Math.min(100, kpis.porcentajeRetardos    ?? 0));
+  const pctInas  = Math.max(0, Math.min(100, kpis.porcentajeInasistencias ?? 0));
   const dashAsist = (pctAsist / 100) * circ;
   const dashRet   = (pctRet   / 100) * circ;
   const dashInas  = (pctInas  / 100) * circ;
   const gaugeCirc = Math.PI * 75;
   const gaugeDash = (Math.min(Math.max(pctAsist, 0), 100) / 100) * gaugeCirc;
-  const totalScansSum = hourlyFlow.reduce((acc, curr) => acc + curr.count, 0) || 520;
+  const totalScansSum = hourlyFlow.reduce((acc, curr) => acc + curr.count, 0);
   const accessPoints = [
     { name: 'Torniquete 01 (Principal)',          count: Math.round(totalScansSum * 0.42), pct: 42, color: primaryHex  },
     { name: 'Torniquete 02 (Secundario)',          count: Math.round(totalScansSum * 0.28), pct: 28, color: '#0284c7'  },
