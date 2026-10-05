@@ -144,6 +144,16 @@ export const authService = {
   /**
    * Cierra la sesión
    */
+  
+  setup2FAReal: async (tempToken) => {
+    const response = await fetch('/api/auth/setup-2fa/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ temp_token: tempToken }),
+    });
+    if (!response.ok) throw new Error('Error al generar QR');
+    return await response.json();
+  },
   logout: () => {
     localStorage.removeItem(STORAGE_KEY_TOKEN);
     localStorage.removeItem(STORAGE_KEY_USER);

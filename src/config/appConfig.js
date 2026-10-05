@@ -29,7 +29,7 @@ export const appConfig = {
     // 'top'                  -> Barra horizontal superior clásica
     // 'sidebar' o 'slidebar' -> Menú vertical lateral estilo Dashboard (izquierda o derecha)
     // 'bottom' o 'dock'      -> Barra flotante inferior estilo Dock de macOS / Móvil
-    navigationStyle: 'dock',  // 'top', | 'sidebar', | 'slidebar', | 'bottom', | 'dock',
+    navigationStyle: 'slidebar',  // 'top', | 'sidebar', | 'slidebar', | 'bottom', | 'dock',
 
     // ¿Qué pantalla quieres que se abra por defecto al entrar al sistema?
     // Opciones: 'dashboard' | 'bitacora' | 'inasistencias' | 'altas'
@@ -282,7 +282,7 @@ export const appConfig = {
     auth: {
       requireLogin: true,            // Cambia a true para activar la pantalla de login, o false para bypass
       enable2FA: true,               // ¿Solicitar los 6 dígitos de Google Authenticator?
-      mockMode: true,                // true = modo prueba en navegador; false = conecta con Django
+      mockMode: false,                // true = modo prueba en navegador; false = conecta con Django
       issuerName: 'Control Escolar RFID',
     },
   },

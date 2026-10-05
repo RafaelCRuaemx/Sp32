@@ -87,6 +87,17 @@ export default function LoginView({ onLoginSuccess }) {
         setTempToken(res.tempToken);
         setStep(2);
         setTimeout(() => pinInputRefs.current[0]?.focus(), 150);
+      } else if (res.status === 'setup_2fa_required') {
+        setTempUser(res.user);
+        setTempToken(res.tempToken);
+        setStep(2);
+        setShowQrModal(true);
+        setTimeout(() => pinInputRefs.current[0]?.focus(), 150);
+
+        setTempUser(res.user);
+        setTempToken(res.tempToken);
+        setStep(2);
+        setTimeout(() => pinInputRefs.current[0]?.focus(), 150);
       } else if (res.status === 'success') {
         onLoginSuccess(res.user);
       }
@@ -260,6 +271,7 @@ export default function LoginView({ onLoginSuccess }) {
       <QrEnrollModal
         isOpen={showQrModal}
         email={email}
+        tempToken={tempToken}
         onClose={() => setShowQrModal(false)}
       />
     </div>
