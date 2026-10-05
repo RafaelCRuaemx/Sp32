@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { appConfig, isSidebarLayout, isBottomNavLayout, getSidebarClasses } from '../config/appConfig';
-import { UserGroupIcon, ExclamationTriangleIcon, XMarkIcon, BellIcon, ArrowRightOnRectangleIcon, DocumentTextIcon, ClockIcon, HomeIcon, Bars3Icon } from '@heroicons/react/24/outline';
+import { UserGroupIcon, ExclamationTriangleIcon, XMarkIcon, BellIcon, ArrowRightOnRectangleIcon, DocumentTextIcon, ClockIcon, HomeIcon, Bars3Icon, Bars2Icon } from '@heroicons/react/24/outline';
 
 /**
  * Navbar - Sistema de navegación adaptable multi-modo:
@@ -18,6 +18,54 @@ export default function Navbar({ activeTab, setActiveTab, user = null, onLogout 
   // Estado para el menú desplegable en dispositivos móviles
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // --- Lógica para barra flotante arrastrable ---
+  const [dockPos, setDockPos] = useState(() => {
+    const guardado = localStorage.getItem('posicion_dock_v2');
+    return guardado ? JSON.parse(guardado) : null;
+  });
+  const [estaArrastrando, setEstaArrastrando] = useState(false);
+  const offsetRaton = useRef({ x: 0, y: 0 });
+
+  const iniciarArrastre = (evento) => {
+    setEstaArrastrando(true);
+    offsetRaton.current = {
+      x: evento.clientX - evento.currentTarget.getBoundingClientRect().left,
+      y: evento.clientY - evento.currentTarget.getBoundingClientRect().top
+    };
+  };
+
+  useEffect(() => {
+    if (!estaArrastrando) return;
+    const moverBarra = (evento) => {
+      let nuevaX = evento.clientX - offsetRaton.current.x;
+      let nuevaY = evento.clientY - offsetRaton.current.y;
+      
+      // Límites de pantalla para evitar que se salga (margen de 16px)
+      const margen = 16;
+      const anchoMax = window.innerWidth - 64;
+      const altoMax = window.innerHeight - 64;
+      
+      nuevaX = Math.max(margen, Math.min(nuevaX, anchoMax));
+      nuevaY = Math.max(margen, Math.min(nuevaY, altoMax));
+      
+      setDockPos({ x: nuevaX, y: nuevaY });
+    };
+    const soltarBarra = () => setEstaArrastrando(false);
+
+    window.addEventListener('mousemove', moverBarra);
+    window.addEventListener('mouseup', soltarBarra);
+    return () => {
+      window.removeEventListener('mousemove', moverBarra);
+      window.removeEventListener('mouseup', soltarBarra);
+    };
+  }, [estaArrastrando]);
+
+  useEffect(() => {
+    if (dockPos && !estaArrastrando) {
+      localStorage.setItem('posicion_dock_v2', JSON.stringify(dockPos));
+    }
+  }, [dockPos, estaArrastrando]);
+  // ----------------------------------------------
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -403,16 +451,38 @@ export default function Navbar({ activeTab, setActiveTab, user = null, onLogout 
   // MODO 2: BARRA FLOTANTE INFERIOR (navigationStyle === 'bottom' o 'dock')
   // ============================================================================
   if (isBottom) {
+    const anchoPantalla = typeof window !== 'undefined' ? window.innerWidth : 1000;
+    const esVertical = dockPos && (dockPos.x < 150 || dockPos.x > anchoPantalla - 150);
+
+    // Calculamos los estilos de posicionamiento dinámicos
+    const positionStyles = dockPos 
+      ? { position: 'fixed', left: dockPos.x, top: dockPos.y, margin: 0, zIndex: 50, cursor: estaArrastrando ? 'grabbing' : 'auto' }
+      : { position: 'fixed', bottom: '1rem', left: '50%', transform: 'translateX(-50%)', zIndex: 50 };
+
     return (
-      <header className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center justify-center pointer-events-auto">
-        <nav className="flex items-center gap-1.5 p-1.5 bg-white/90 backdrop-blur-xl border border-slate-200/90 shadow-2xl rounded-2xl sm:rounded-full">
+      <header style={positionStyles} className="flex items-center justify-center pointer-events-auto select-none">
+        <nav className={`flex ${esVertical ? 'flex-col' : 'items-center'} gap-1.5 p-1.5 bg-white/90 backdrop-blur-xl border border-slate-200/90 shadow-2xl rounded-2xl ${!esVertical && 'sm:rounded-full'}`}>
+          {/* Agarradera para arrastrar */}
+          <div 
+            onMouseDown={iniciarArrastre} 
+            onDoubleClick={() => {
+              setDockPos(null);
+              localStorage.removeItem('posicion_dock_v2');
+            }}
+            className={`flex items-center justify-center cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 ${esVertical ? 'pb-2 pt-1' : 'pl-2 pr-1'}`}
+            title="Arrastrar barra (Doble clic para restaurar al centro)"
+          >
+            <Bars2Icon className={`w-5 h-5 ${esVertical ? 'rotate-0' : 'rotate-90'}`} />
+          </div>
+
           {navItems.map((item) => {
             const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl sm:rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                title={esVertical ? item.label : undefined}
+                className={`flex items-center gap-2 ${esVertical ? 'p-3 rounded-xl' : 'px-3.5 py-2 rounded-xl sm:rounded-full'} text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                   isActive
                     ? 'theme-btn-primary relative z-10'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
@@ -420,15 +490,28 @@ export default function Navbar({ activeTab, setActiveTab, user = null, onLogout 
                 style={isActive ? { boxShadow: '0 0 14px 2px var(--color-accent)' } : undefined}
               >
                 {item.icon}
-                <span>{item.label}</span>
+                {!esVertical && <span>{item.label}</span>}
               </button>
             );
           })}
 
-          {showClock && (
+          {showClock && !esVertical && (
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-slate-100/90 rounded-full text-[11px] font-mono text-slate-700 border border-slate-200/60 ml-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
               <span>{horaLocal}</span>
+            </div>
+          )}
+
+          {user && onLogout && (
+            <div className={`${esVertical ? 'border-t border-slate-200/60 pt-1.5 mt-1' : 'border-l border-slate-200/60 pl-1.5 ml-1'}`}>
+              <button
+                type="button"
+                onClick={onLogout}
+                title="Cerrar sesión"
+                className="flex items-center justify-center p-2 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+              >
+                <ArrowRightOnRectangleIcon className="w-4 h-4" />
+              </button>
             </div>
           )}
         </nav>

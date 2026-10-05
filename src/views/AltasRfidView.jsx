@@ -239,7 +239,7 @@ export default function AltasRfidView({ showToast }) {
 
   // Filtrado de usuarios por Rol (Todos, Estudiante, Docente, etc.)
   const displayUsuarios =
-    rolFilter === 'todos' ? usuarios : usuarios.filter((u) => u.rol === rolFilter);
+    rolFilter === 'todos' ? usuarios : usuarios.filter((u) => u.rol_nombre === rolFilter || u.rol === rolFilter);
 
   // Configuración de visibilidad de columnas (appConfig.tablesDisplay.altas)
   const showPhone = appConfig.tablesDisplay?.altas?.showPhoneColumn !== false;
@@ -376,13 +376,13 @@ export default function AltasRfidView({ showToast }) {
         <div className={`theme-card border ${cardRadius} p-3.5 ${cardShadow}`}>
           <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider block">Estudiantes</span>
           <span className="text-2xl font-bold theme-text-primary font-mono mt-0.5 block">
-            {usuarios.filter((u) => u.rol === 'Estudiante').length}
+            {usuarios.filter((u) => u.rol_nombre === 'Estudiante' || u.rol === 'Estudiante').length}
           </span>
         </div>
         <div className={`theme-card border ${cardRadius} p-3.5 ${cardShadow}`}>
           <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider block">Docentes</span>
           <span className="text-2xl font-bold text-purple-600 font-mono mt-0.5 block">
-            {usuarios.filter((u) => u.rol === 'Docente').length}
+            {usuarios.filter((u) => u.rol_nombre === 'Docente' || u.rol === 'Docente').length}
           </span>
         </div>
         <div className={`theme-card border ${cardRadius} p-3.5 ${cardShadow}`}>

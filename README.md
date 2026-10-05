@@ -212,3 +212,8 @@ A continuación se detalla qué botones requieren o no doble confirmación y por
   - Ejecuta la creación/actualización con validación de campos obligatorios y muestra notificación *Toast* inmediata.
 - **"Eliminar / Dar de Baja Usuario" (Icono de papelera en la fila):**
   - *Acción destructiva:* Actualmente ejecuta la eliminación local y envía la notificación flotante. Si deseas máxima seguridad para evitar clics accidentales en producción, puede agregarse un pequeño diálogo modal de confirmación (*"¿Deseas desvincular a este usuario?"*).
+
+
+
+Correo / Usuario: admin@escuela.edu
+Contraseña: password123

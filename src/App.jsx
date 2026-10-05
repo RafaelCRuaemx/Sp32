@@ -37,6 +37,24 @@ function App() {
   // Control de sesión y 2FA (Google Authenticator)
   const [isAuthenticated, setIsAuthenticated] = useState(() => authService.isAuthenticated());
   const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUser());
+  const [isVerifying, setIsVerifying] = useState(true);
+
+  useEffect(() => {
+    const verifyAuth = async () => {
+      if (appConfig.security?.auth?.requireLogin) {
+        if (authService.isAuthenticated()) {
+          const isValid = await authService.verifySessionOnServer();
+          if (!isValid) {
+            authService.logout();
+            setIsAuthenticated(false);
+            setCurrentUser(null);
+          }
+        }
+      }
+      setIsVerifying(false);
+    };
+    verifyAuth();
+  }, []);
 
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
@@ -157,6 +175,14 @@ function App() {
   const isSidebar = isSidebarLayout();
   const isBottom = isBottomNavLayout();
   const isRightSidebar = isSidebar && appConfig.layout?.sidebar?.position === 'right';
+
+  if (isVerifying && appConfig.security?.auth?.requireLogin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-slate-900"></div>
+      </div>
+    );
+  }
 
   // Si requireLogin está activo y el usuario no se ha autenticado con 2FA
   if (!isAuthenticated && appConfig.security?.auth?.requireLogin) {

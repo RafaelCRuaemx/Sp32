@@ -29,7 +29,7 @@ export const appConfig = {
     // 'top'                  -> Barra horizontal superior clásica
     // 'sidebar' o 'slidebar' -> Menú vertical lateral estilo Dashboard (izquierda o derecha)
     // 'bottom' o 'dock'      -> Barra flotante inferior estilo Dock de macOS / Móvil
-    navigationStyle: 'slidebar',  // 'top', | 'sidebar', | 'slidebar', | 'bottom', | 'dock',
+    navigationStyle: 'dock',  // 'top', | 'sidebar', | 'slidebar', | 'bottom', | 'dock',
 
     // ¿Qué pantalla quieres que se abra por defecto al entrar al sistema?
     // Opciones: 'dashboard' | 'bitacora' | 'inasistencias' | 'altas'

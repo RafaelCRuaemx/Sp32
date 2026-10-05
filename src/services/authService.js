@@ -158,4 +158,32 @@ export const authService = {
     localStorage.removeItem(STORAGE_KEY_TOKEN);
     localStorage.removeItem(STORAGE_KEY_USER);
   },
+
+  /** 
+   * Verifica silenciosamente con el Backend si el token actual es válido
+   */
+  verifySessionOnServer: async () => {
+    const isMock = appConfig.security?.auth?.mockMode ?? true;
+    const token = localStorage.getItem(STORAGE_KEY_TOKEN);
+
+    if (!token) return false;
+    
+    if (isMock) {
+      return true; // Si está probando sin Django, lo deja pasar
+    }
+      
+    try {
+      // Le pedimos al backend que valide el token
+      const response = await fetch('/api/auth/verify-token/', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+      return response.ok;
+    } catch (error) {
+      return false; // Si falla la red o el token caducó, denegamos el acceso
+    }
+  },
 };
