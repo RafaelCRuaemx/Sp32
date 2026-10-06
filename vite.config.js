@@ -9,6 +9,7 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    allowedHosts: true, // Permite conexiones desde cualquier host (como ngrok)
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8000',

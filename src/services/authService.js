@@ -72,14 +72,25 @@ export const authService = {
     }
 
     // Modo producción con Django:
-    const response = await fetch('/api/auth/login/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.detail || 'Error al iniciar sesión');
+    try {
+      const response = await fetch('/api/auth/login/', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true' // Evita que Ngrok bloquee la petición API
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || err.message || 'Error al iniciar sesión (Revisa que el servidor si este correctamente)');
+      }
+      return await response.json();
+    } catch (error) {
+      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+        throw new Error('No se pudo conectar con el servidor (Vite o Django están caídos, o Ngrok bloqueó la petición).');
+      }
+      throw error;
     }
     return await response.json();
   },

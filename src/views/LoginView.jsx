@@ -236,12 +236,6 @@ export default function LoginView({ onLoginSuccess }) {
               ))}
             </div>
 
-            {/* Temporizador de 30s */}
-            <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-              <span>El código cambia en: <strong>{secondsLeft}s</strong></span>
-            </div>
-
             {/* Acciones adicionales */}
             <div className="space-y-2 pt-2 border-t border-slate-100">
               <button
@@ -249,7 +243,7 @@ export default function LoginView({ onLoginSuccess }) {
                 onClick={() => setShowQrModal(true)}
                 className="w-full text-center text-xs font-semibold text-emerald-600 hover:text-emerald-700 cursor-pointer py-1"
               >
-                ¿No tienes configurado el autenticador? Ver Código QR
+                
               </button>
 
               <button

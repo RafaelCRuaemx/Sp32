@@ -23,7 +23,8 @@ async function request(endpoint, options = {}) {
   const token = localStorage.getItem('rfid_auth_token');
   const headers = {
     'Content-Type': 'application/json',
-    Accept: 'application/json',
+    'Accept': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
     ...options.headers,
   };
   
@@ -80,8 +81,10 @@ export const BitacoraService = {
     return request(url);
   },
   simularLectura: async (payload) => {
+    const esp32Key = import.meta.env.VITE_ESP32_API_KEY || 'hardw4r3_s3cr3t_esp32_2026';
     return request('/accesos/simular-lectura/',{
       method : 'POST',
+      headers: { 'X-Hardware-Key': esp32Key },
       body : JSON.stringify(payload),
     });
   },
