@@ -93,11 +93,6 @@ export default function LoginView({ onLoginSuccess }) {
         setStep(2);
         setShowQrModal(true);
         setTimeout(() => pinInputRefs.current[0]?.focus(), 150);
-
-        setTempUser(res.user);
-        setTempToken(res.tempToken);
-        setStep(2);
-        setTimeout(() => pinInputRefs.current[0]?.focus(), 150);
       } else if (res.status === 'success') {
         onLoginSuccess(res.user);
       }

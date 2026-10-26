@@ -5,6 +5,7 @@
  * Soporta modo simulación (Mock) para pruebas locales y conexión real con Django REST.
  */
 import { appConfig } from '../config/appConfig';
+import { request } from './api';
 
 const STORAGE_KEY_TOKEN = 'rfid_auth_token';
 const STORAGE_KEY_USER = 'rfid_auth_user';
@@ -71,28 +72,11 @@ export const authService = {
       throw new Error('Credenciales incorrectas (mínimo 4 caracteres en contraseña)');
     }
 
-    // Modo producción con Django:
-    try {
-      const response = await fetch('/api/auth/login/', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true' // Evita que Ngrok bloquee la petición API
-        },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.detail || err.message || 'Error al iniciar sesión (Revisa que el servidor si este correctamente)');
-      }
-      return await response.json();
-    } catch (error) {
-      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
-        throw new Error('No se pudo conectar con el servidor (Vite o Django están caídos, o Ngrok bloqueó la petición).');
-      }
-      throw error;
-    }
-    return await response.json();
+    // Modo producción con Django usando cliente centralizado:
+    return request('/auth/login/', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
   },
 
   /**
@@ -138,15 +122,11 @@ export const authService = {
     }
 
     // Modo producción con Django:
-    const response = await fetch('/api/auth/verify-2fa/', {
+    const data = await request('/auth/verify-2fa/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ temp_token: tempToken, code }),
     });
-    if (!response.ok) {
-      throw new Error('Código de Google Authenticator incorrecto o expirado.');
-    }
-    const data = await response.json();
+
     localStorage.setItem(STORAGE_KEY_TOKEN, data.token);
     localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(data.user));
     return data;
@@ -155,16 +135,13 @@ export const authService = {
   /**
    * Cierra la sesión
    */
-  
   setup2FAReal: async (tempToken) => {
-    const response = await fetch('/api/auth/setup-2fa/', {
+    return request('/auth/setup-2fa/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ temp_token: tempToken }),
     });
-    if (!response.ok) throw new Error('Error al generar QR');
-    return await response.json();
   },
+
   logout: () => {
     localStorage.removeItem(STORAGE_KEY_TOKEN);
     localStorage.removeItem(STORAGE_KEY_USER);
@@ -176,25 +153,14 @@ export const authService = {
   verifySessionOnServer: async () => {
     const isMock = appConfig.security?.auth?.mockMode ?? true;
     const token = localStorage.getItem(STORAGE_KEY_TOKEN);
-
     if (!token) return false;
-    
-    if (isMock) {
-      return true; // Si está probando sin Django, lo deja pasar
-    }
+    if (isMock) return true;
       
     try {
-      // Le pedimos al backend que valide el token
-      const response = await fetch('/api/auth/verify-token/', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-      });
-      return response.ok;
-    } catch (error) {
-      return false; // Si falla la red o el token caducó, denegamos el acceso
+      await request('/auth/verify-token/');
+      return true;
+    } catch {
+      return false;
     }
   },
 };

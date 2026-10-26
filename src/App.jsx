@@ -56,6 +56,23 @@ function App() {
     verifyAuth();
   }, []);
 
+    // Escuchar si el interceptor 401 detecta que el token caducó
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+      setToast({
+        show: true,
+        title: 'Sesión Expirada',
+        message: 'Tu sesión ha caducado por inactividad. Por favor, ingresa de nuevo.',
+        type: 'warning',
+      });
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, []);
+
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
     setIsAuthenticated(true);

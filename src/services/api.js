@@ -15,7 +15,7 @@ const TIMEOUT_MS = appConfig.api?.timeoutMs ?? 8000;
 // ---------------------------------------------------------------------------
 // Cliente HTTP base con timeout y manejo de errores
 // ---------------------------------------------------------------------------
-async function request(endpoint, options = {}) {
+export async function request (endpoint, options={}){
   const url = `${API_BASE_URL}${endpoint}`;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -23,11 +23,11 @@ async function request(endpoint, options = {}) {
   const token = localStorage.getItem('rfid_auth_token');
   const headers = {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    'ngrok-skip-browser-warning': 'true',
-    ...options.headers,
+    'Accept' : 'application/json',
+    'ngrok-skip-browser-warning' : 'true',
+    ... options.headers,
   };
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -39,6 +39,14 @@ async function request(endpoint, options = {}) {
       headers,
     });
     clearTimeout(timeoutId);
+    
+    // INTERCEPTOR 401: Si el token caduco y no es un intento de login
+    if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/verify-2fa')) {
+      localStorage.removeItem('rfid_auth_token');
+      localStorage.removeItem('rfid_auth_user');
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      throw new Error('Tu sesión ha expirado. Por favor, ingresa de nuevo.');
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
